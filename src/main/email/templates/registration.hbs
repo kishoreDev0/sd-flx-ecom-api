@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Deflux</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap"
+        rel="stylesheet">
+    {{{ css }}}
+    {{{ authentication }}}
+</head>
+
+<body>
+    <div class="container">
+        {{> header text='Welcome To Deflux'}}
+        <div class="content">
+            <p>
+                <b>Hello {{ username }},</b>
+            </p>
+            <p>
+                We are excited to welcome you to Deflux
+            </p>
+            <p>
+                The next step is to log in to your account.
+            </p>
+            <p>
+                <b>Your Account</b>
+            </p>
+            <p>
+                We created your account and uploaded some basic information to your profile. Here is your user name and
+                password to get started:
+            </p>
+            <table>
+                <tr class="thead">
+                    <th>Username</th>
+                    <th>Password</th>
+                </tr>
+                <tr>
+                    <td>{{ username }}</td>
+                    <td>{{ password }}</td>
+                </tr>
+            </table>
+            <p class="highlight-text">
+                Please be sure to create a new, unique password after logging in.
+            </p>
+            <a href={{ link }} class="button">My Account</a>
+        </div>
+        {{> footer }}
+    </div>
+</body>
+
+</html>

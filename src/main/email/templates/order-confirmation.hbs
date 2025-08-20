@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Confirmation - Deflux</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4; color: #333;">
+  <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #f4f4f4; padding: 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" style="width: 100%; max-width: 600px; border-collapse: collapse; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="background-color: #1f2937; padding: 20px; text-align: center;">
+              <h1 style="margin: 0; font-size: 24px; font-weight: bold; color: #ffffff;">Deflux</h1>
+            </td>
+          </tr>
+
+          <!-- Main Content -->
+          <tr>
+            <td style="padding: 30px;">
+              <h2 style="font-size: 20px; font-weight: bold; color: #1f2937; margin: 0 0 10px;">Thank You for Your Order, {{name}}!</h2>
+              <p style="font-size: 14px; color: #4b5563; margin: 0 0 20px;">We’ve received your order, and we’re getting it ready for you. Below are the details of your purchase.</p>
+
+              <!-- Order Details -->
+              <h3 style="font-size: 16px; font-weight: bold; color: #1f2937; margin: 0 0 10px;">Order Details</h3>
+              <p style="font-size: 14px; color: #4b5563; margin: 0 0 20px;">
+                <strong>Order Number:</strong> {{orderId}}<br>
+                <strong>Order Date:</strong>{{creatDate}}<br>
+                <strong>Shipping Address:</strong> {{address}}
+              </p>
+
+              <!-- Product Details -->
+              <h3 style="font-size: 16px; font-weight: bold; color: #1f2937; margin: 0 0 10px;">Products Ordered</h3>
+              <table role="presentation" style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                <thead>
+                  <tr style="background-color: #f9fafb;">
+                    <th style="font-size: 14px; font-weight: bold; color: #1f2937; padding: 10px; text-align: left; border-bottom: 1px solid #e5e7eb;">Product</th>
+                    <th style="font-size: 14px; font-weight: bold; color: #1f2937; padding: 10px; text-align: center; border-bottom: 1px solid #e5e7eb;">Quantity</th>
+                    <th style="font-size: 14px; font-weight: bold; color: #1f2937; padding: 10px; text-align: right; border-bottom: 1px solid #e5e7eb;">Price</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Dynamic Product Rows -->
+                  {{!-- <tr>
+                    <td style="font-size: 14px; color: #4b5563; padding: 10px; border-bottom: 1px solid #e5e7eb;">[Product Name 1]</td>
+                    <td style="font-size: 14px; color: #4b5563; padding: 10px; text-align: center; border-bottom: 1px solid #e5e7eb;">[Quantity 1]</td>
+                    <td style="font-size: 14px; color: #4b5563; padding: 10px; text-align: right; border-bottom: 1px solid #e5e7eb;">$[Price 1]</td>
+                  </tr>
+                  <tr>
+                    <td style="font-size: 14px; color: #4b5563; padding: 10px; border-bottom: 1px solid #e5e7eb;">[Product Name 2]</td>
+                    <td style="font-size: 14px; color: #4b5563; padding: 10px; text-align: center; border-bottom: 1px solid #e5e7eb;">[Quantity 2]</td>
+                    <td style="font-size: 14px; color: #4b5563; padding: 10px; text-align: right; border-bottom: 1px solid #e5e7eb;">$[Price 2]</td>
+                  </tr> --}}
+                {{#each product}}
+                    <tr>
+                    <td style="font-size: 14px; color: #4b5563; padding: 10px; border-bottom: 1px solid #e5e7eb;">{{name}}</td>
+                    <td style="font-size: 14px; color: #4b5563; padding: 10px; text-align: center; border-bottom: 1px solid #e5e7eb;">{{quantity}}</td>
+                    <td style="font-size: 14px; color: #4b5563; padding: 10px; text-align: right; border-bottom: 1px solid #e5e7eb;">${{price}}</td>
+                    </tr>
+                {{/each}}
+                  <!-- Add more rows dynamically as needed -->
+                </tbody>
+              </table>
+
+              <!-- Bill Summary -->
+              <h3 style="font-size: 16px; font-weight: bold; color: #1f2937; margin: 0 0 10px;">Bill Summary</h3>
+              <table role="presentation" style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                <tr>
+                  <td style="font-size: 14px; color: #4b5563; padding: 5px 0;">Subtotal</td>
+                  <td style="font-size: 14px; color: #4b5563; padding: 5px 0; text-align: right;">{{subTotal}}</td>
+                </tr>
+                <tr>
+                  <td style="font-size: 14px; color: #4b5563; padding: 5px 0;">Shipping</td>
+                  <td style="font-size: 14px; color: #10b981; padding: 5px 0; text-align: right;">Free</td>
+                </tr>
+                <tr>
+                  <td style="font-size: 14px; color: #4b5563; padding: 5px 0;">Tax</td>
+                  <td style="font-size: 14px; color: #4b5563; padding: 5px 0; text-align: right;">Free</td>
+                </tr>
+                <tr style="border-top: 1px solid #e5e7eb;">
+                  <td style="font-size: 14px; font-weight: bold; color: #1f2937; padding: 10px 0 0;">Total</td>
+                  <td style="font-size: 14px; font-weight: bold; color: #1f2937; padding: 10px 0 0; text-align: right;">{{subTotal}}</td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <a
+                href="[Order Tracking URL]"
+                style="display: inline-block; background-color: #dc2626; color: #ffffff; font-size: 14px; font-weight: medium; text-decoration: none; padding: 10px 20px; border-radius: 4px; margin-top: 20px; text-align: center;"
+              >
+                Track Your Order
+              </a>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f9fafb; padding: 20px; text-align: center;">
+              <p style="font-size: 12px; color: #6b7280; margin: 0 0 10px;">
+                Need help? <a href="mailto:support@deflux.com" style="color: #dc2626; text-decoration: underline;">Contact Us</a>
+              </p>
+              <p style="font-size: 12px; color: #6b7280; margin: 0;">
+                © 2025 Deflux. All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
