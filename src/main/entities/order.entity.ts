@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, CreateDateColumn, UpdateDateColumn, JoinColumn } from 'typeorm';
 import { User } from './user.entity';
+import { OrderTracking } from './order-tracking.entity';
 
 export enum OrderStatus {
   PENDING = 'pending',
@@ -50,4 +51,8 @@ export class Order {
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'updated_by' })
   updatedBy: User;
+
+  // Relationship with order tracking
+  @OneToMany(() => OrderTracking, (tracking) => tracking.order)
+  tracking: OrderTracking[];
 }

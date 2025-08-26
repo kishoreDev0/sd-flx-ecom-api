@@ -5,10 +5,14 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
+  OneToMany,
   JoinColumn,
 } from 'typeorm';
 import { User } from './user.entity';
-import { Category } from './category.entity'; 
+import { Category } from './category.entity';
+import { Brand } from './brand.entity';
+import { Vendor } from './vendor.entity';
+import { ProductRating } from './product-rating.entity';
 
 @Entity('def_product')
 export class Product {
@@ -28,6 +32,20 @@ export class Product {
   @ManyToOne(() => Category)
   @JoinColumn({ name: 'category_id' })
   category: Category;
+
+  // Brand relationship
+  @ManyToOne(() => Brand, { nullable: true })
+  @JoinColumn({ name: 'brand_id' })
+  brand: Brand;
+
+  // Vendor relationship
+  @ManyToOne(() => Vendor, { nullable: true })
+  @JoinColumn({ name: 'vendor_id' })
+  vendor: Vendor;
+
+  // Relationship with ratings
+  @OneToMany(() => ProductRating, (rating) => rating.product)
+  ratings: ProductRating[];
 
   @Column('simple-array', { nullable: true })
   features: number[];

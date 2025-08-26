@@ -7,19 +7,27 @@ import { GlobalExceptionFilter } from './main/commons/exceptions/filters/http-ex
 import { seedRole } from './main/commons/seeds/role.seeder';
 import { DataSource } from 'typeorm';
 import { seedDefault } from './main/commons/seeds/default.seeder';
-import { join } from 'path'; // ✅ Make sure this is imported
+import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import helmet from 'helmet';
+import compression from 'compression';
+import morgan from 'morgan';
 
 
 
 export async function bootstrap(): Promise<void> {
-  // const app = await NestFactory.create(AppModule);
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  app.use(json({ limit: '50mb' }));
-  app.use(urlencoded({ extended: true, limit: '50mb' }));
+  
+  // Apply security middlewares
+  app.use(helmet());
+  app.use(compression());
+  app.use(morgan('combined'));
+  
+  // Apply request parsing with limits
+  app.use(json({ limit: '10mb' }));
+  app.use(urlencoded({ extended: true, limit: '10mb' }));
   app.useStaticAssets(join(process.cwd(), 'public'));
- 
-
+  
   const dataSource = app.get(DataSource);
   await seedRole(dataSource);
   await seedDefault(dataSource);
@@ -39,7 +47,13 @@ export async function bootstrap(): Promise<void> {
 
   setupSwagger(app, globalPrefix);
 
-  app.enableCors();
+  // Configure CORS with security options
+  app.enableCors({
+    origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    credentials: true,
+  });
 
   await app.listen(process.env.PORT || 3008);
   console.log(

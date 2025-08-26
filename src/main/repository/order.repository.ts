@@ -18,6 +18,11 @@ export class OrderRepository {
     return this.repo.save(order);
   }
 
+  async update(id: number, data: Partial<Order>) {
+    await this.repo.update(id, data);
+    return this.findById(id);
+  }
+
   async deleteById(id: number) {
     await this.repo.delete(id);
   }

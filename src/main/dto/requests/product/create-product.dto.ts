@@ -29,6 +29,16 @@ export class CreateProductDto {
   @Type(() => Number)
   categoryId: number;
 
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  brandId?: number;
+
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  vendorId?: number;
+
   @IsArray()
   @IsOptional()
   @IsNumber({}, { each: true })

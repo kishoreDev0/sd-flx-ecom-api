@@ -3,11 +3,13 @@ import {
   Column,
   PrimaryGeneratedColumn,
   ManyToOne,
+  OneToMany,
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Role } from './role.entity';
+import { Notification } from './notification.entity';
 
 @Entity('def_users')
 export class User {
@@ -119,4 +121,8 @@ export class User {
 
   @UpdateDateColumn({ name: 'updated_at', nullable: true, default: null })
   updatedAt: Date;
+
+  // Relationship with notifications
+  @OneToMany(() => Notification, (notification) => notification.user)
+  notifications: Notification[];
 }

@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import { BrandCategory } from './brand-category.entity';
 
 @Entity('def_category')
 export class Category {
@@ -25,4 +26,8 @@ export class Category {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  // Relationship with brands through mapping table
+  @OneToMany(() => BrandCategory, (brandCategory) => brandCategory.category)
+  brandCategories: BrandCategory[];
 }

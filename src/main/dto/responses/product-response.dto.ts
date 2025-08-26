@@ -12,10 +12,13 @@ export class ProductResponseDto {
   description: string;
 
   @ApiProperty({ type: [String] })
-  images: string[];
+  imagesPath: string[];
 
   @ApiProperty()
   category: number;
+
+  @ApiProperty({ required: false })
+  brand?: number;
 
   @ApiProperty({ type: [String] })
   features: string[];

@@ -13,7 +13,22 @@ export class CommonUtilService {
 
   async isUserAdmin(userId: number): Promise<boolean> {
     const user = await this.userRepository.findUserById(userId);
-    return user?.role?.id === Roles.SUPER_USER;
+    return user?.role?.id === Roles.ADMIN;
+  }
+
+  async isUserVendor(userId: number): Promise<boolean> {
+    const user = await this.userRepository.findUserById(userId);
+    return user?.role?.id === Roles.VENDOR;
+  }
+
+  async isUserRegularUser(userId: number): Promise<boolean> {
+    const user = await this.userRepository.findUserById(userId);
+    return user?.role?.id === Roles.USER;
+  }
+
+  async getUserRole(userId: number): Promise<string> {
+    const user = await this.userRepository.findUserById(userId);
+    return user?.role?.roleName || 'Unknown';
   }
 
   async isUserActive(userId: number): Promise<boolean> {
@@ -22,6 +37,10 @@ export class CommonUtilService {
   }
 
   async getUser(userId: number): Promise<User> {
+    return this.userRepository.findUserById(userId);
+  }
+
+  async getUserById(userId: number): Promise<User> {
     return this.userRepository.findUserById(userId);
   }
 

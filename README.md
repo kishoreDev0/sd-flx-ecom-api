@@ -22,78 +22,333 @@
   <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
   [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
-## Description
+# E-commerce API with Security, Order Tracking, and Notifications
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+A comprehensive NestJS-based e-commerce API with advanced security features, order tracking, and notification systems.
 
-## Project setup
+## 🚀 Features
 
-```bash
-$ npm install
+### Core E-commerce Features
+- **User Management**: Registration, authentication, role-based access control
+- **Product Management**: CRUD operations, categories, brands, vendors
+- **Shopping Cart**: Add/remove items, quantity management
+- **Wishlist**: Save favorite products
+- **Order Management**: Create, track, and manage orders
+- **Vendor System**: Multi-vendor marketplace support
+- **Product Ratings & Reviews**: Customer feedback system
+
+### Security Features
+- **Helmet**: Security headers protection
+- **Rate Limiting**: API rate limiting with different rules for different endpoints
+- **CORS**: Configurable cross-origin resource sharing
+- **Request Validation**: Input sanitization and validation
+- **Security Logging**: Comprehensive security event logging
+- **Authentication**: JWT-based authentication with role-based access
+
+### Order Tracking System
+- **Real-time Tracking**: Track order status changes
+- **Multiple Status Types**: Pending, confirmed, processing, shipped, delivered, cancelled, returned, refunded
+- **Tracking Numbers**: Support for shipping carrier tracking
+- **Location Updates**: Track order location during transit
+- **Estimated Delivery**: Delivery date estimation
+- **Tracking History**: Complete order tracking timeline
+
+### Notification System
+- **Multiple Channels**: In-app notifications and email notifications
+- **Notification Types**: Order status, payment, security alerts, promotional
+- **Priority Levels**: Low, medium, high, urgent
+- **Read/Unread Status**: Track notification read status
+- **Expiration**: Configurable notification expiration
+- **Bulk Operations**: Mark all as read, bulk creation
+
+### Advanced Features
+- **Multi-role System**: Admin, Vendor, User roles
+- **Brand-Category Mapping**: Many-to-many relationships with additional attributes
+- **Product Filtering**: Advanced filtering by brand, category, price, stock
+- **Pagination**: Efficient data pagination
+- **File Upload**: Image and document upload support
+- **Email Integration**: Transactional email support
+- **Google OAuth**: Social login integration
+
+## 🛠️ Technology Stack
+
+- **Framework**: NestJS (Node.js)
+- **Database**: MySQL with TypeORM
+- **Authentication**: JWT, Passport.js
+- **Security**: Helmet, Rate Limiting, CORS
+- **Documentation**: Swagger/OpenAPI
+- **Logging**: Winston
+- **Email**: Nodemailer
+- **Validation**: Class-validator, class-transformer
+
+## 📋 Prerequisites
+
+- Node.js (v16 or higher)
+- MySQL (v8.0 or higher)
+- npm or yarn
+
+## 🚀 Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd sd-flx-ecom-api
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Environment Configuration**
+   Create a `.env` file in the root directory:
+   ```env
+   # Database Configuration
+   DB_HOST=localhost
+   DB_PORT=3306
+   DB_USERNAME=your_username
+   DB_PASSWORD=your_password
+   DB_NAME=ecommerce_db
+
+   # JWT Configuration
+   JWT_SECRET=your_jwt_secret_key
+   JWT_EXPIRES_IN=24h
+
+   # Email Configuration
+   MAIL_HOST=smtp.gmail.com
+   MAIL_PORT=587
+   MAIL_USER=your_email@gmail.com
+   MAIL_PASS=your_email_password
+
+   # Google OAuth
+   GOOGLE_CLIENT_ID=your_google_client_id
+   GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+   # Security Configuration
+   ALLOWED_ORIGINS=http://localhost:3000,https://yourdomain.com
+
+   # Application Configuration
+   PORT=3008
+   NODE_ENV=development
+   ```
+
+4. **Database Setup**
+   ```bash
+   # Create database
+   CREATE DATABASE ecommerce_db;
+   ```
+
+5. **Run the application**
+   ```bash
+   # Development mode
+   npm run start:dev
+
+   # Production mode
+   npm run build
+   npm run start:prod
+   ```
+
+## 📚 API Documentation
+
+Once the application is running, you can access the Swagger documentation at:
+```
+http://localhost:3008/api
 ```
 
-## Compile and run the project
+## 🔐 Security Features
 
-```bash
-# development
-$ npm run start
+### Rate Limiting
+- **Authentication endpoints**: 5 requests per 15 minutes
+- **General API**: 100 requests per 15 minutes
+- **File uploads**: 10 requests per hour
 
-# watch mode
-$ npm run start:dev
+### Security Headers
+- Content Security Policy (CSP)
+- X-Frame-Options: DENY
+- X-Content-Type-Options: nosniff
+- X-XSS-Protection: 1; mode=block
+- Strict-Transport-Security
+- Referrer-Policy
+- Permissions-Policy
 
-# production mode
-$ npm run start:prod
+### Input Validation
+- Request size limits (10MB)
+- Content-type validation
+- Input sanitization
+- SQL injection prevention
+
+## 📦 Order Tracking System
+
+### Order Status Flow
+1. **Pending** → Order created, awaiting confirmation
+2. **Confirmed** → Order confirmed, payment received
+3. **Processing** → Order being prepared for shipment
+4. **Shipped** → Order shipped with tracking number
+5. **Out for Delivery** → Order in final delivery phase
+6. **Delivered** → Order successfully delivered
+7. **Cancelled** → Order cancelled (if applicable)
+8. **Returned** → Order returned by customer
+9. **Refunded** → Order refunded
+
+### Tracking Features
+- Real-time status updates
+- Shipping carrier integration
+- Location tracking
+- Estimated delivery dates
+- Complete tracking history
+- Automatic notifications
+
+## 🔔 Notification System
+
+### Notification Types
+- **Order Status**: Status change notifications
+- **Order Confirmation**: Order confirmation emails
+- **Order Shipped**: Shipping notifications with tracking
+- **Order Delivered**: Delivery confirmation
+- **Payment Success/Failed**: Payment status notifications
+- **Security Alerts**: Security-related notifications
+- **Promotional**: Marketing notifications
+- **System Maintenance**: System update notifications
+
+### Features
+- Priority-based notifications
+- Read/unread status tracking
+- Notification expiration
+- Bulk operations
+- Email integration
+- In-app notifications
+
+## 👥 User Roles
+
+### Admin
+- Full system access
+- User management
+- Order management
+- Vendor approval
+- System configuration
+
+### Vendor
+- Product management
+- Order fulfillment
+- Sales analytics
+- Brand management
+- Commission tracking
+
+### User
+- Product browsing
+- Shopping cart
+- Order placement
+- Reviews and ratings
+- Profile management
+
+## 🏗️ Project Structure
+
+```
+src/
+├── main/
+│   ├── commons/
+│   │   ├── constants/          # Response constants
+│   │   ├── decorators/         # Custom decorators
+│   │   ├── enumerations/       # Enums
+│   │   ├── exceptions/         # Exception filters
+│   │   ├── guards/             # Authentication guards
+│   │   └── seeds/              # Database seeds
+│   ├── config/                 # Configuration files
+│   ├── controller/             # API controllers
+│   ├── database/               # Database configuration
+│   ├── dto/                    # Data transfer objects
+│   ├── entities/               # Database entities
+│   ├── middleware/             # Security middleware
+│   ├── modules/                # Feature modules
+│   ├── repository/             # Data access layer
+│   ├── service/                # Business logic
+│   └── utils/                  # Utility functions
+├── swagger/                    # API documentation
+└── main.ts                     # Application entry point
 ```
 
-## Run tests
+## 🔧 Configuration
+
+### Environment Variables
+- Database connection settings
+- JWT configuration
+- Email settings
+- Google OAuth credentials
+- Security settings
+- Application settings
+
+### Security Configuration
+- CORS origins
+- Rate limiting rules
+- Security headers
+- File upload limits
+- Session management
+
+## 🧪 Testing
 
 ```bash
-# unit tests
-$ npm run test
+# Unit tests
+npm run test
 
-# e2e tests
-$ npm run test:e2e
+# E2E tests
+npm run test:e2e
 
-# test coverage
-$ npm run test:cov
+# Test coverage
+npm run test:cov
 ```
 
-## Deployment
+## 📊 Monitoring & Logging
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+- **Security Logging**: Suspicious activity detection
+- **Request Logging**: HTTP request/response logging
+- **Error Logging**: Comprehensive error tracking
+- **Performance Monitoring**: Request duration tracking
+- **Audit Trail**: User action logging
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## 🚀 Deployment
 
+### Production Deployment
+1. Set environment variables for production
+2. Build the application: `npm run build`
+3. Start the application: `npm run start:prod`
+4. Configure reverse proxy (nginx)
+5. Set up SSL certificates
+6. Configure database backups
+
+### Docker Deployment
 ```bash
-$ npm install -g mau
-$ mau deploy
+# Build Docker image
+docker build -t ecommerce-api .
+
+# Run container
+docker run -p 3008:3008 ecommerce-api
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## 🤝 Contributing
 
-## Resources
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests
+5. Submit a pull request
 
-Check out a few resources that may come in handy when working with NestJS:
+## 📄 License
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+This project is licensed under the MIT License.
 
-## Support
+## 🆘 Support
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+For support and questions:
+- Create an issue in the repository
+- Contact the development team
+- Check the API documentation
 
-## Stay in touch
+## 🔄 Changelog
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+### v1.0.0
+- Initial release with core e-commerce features
+- Security middleware implementation
+- Order tracking system
+- Notification system
+- Multi-role user management
+- Product rating and review system

@@ -19,7 +19,7 @@ export class RoleService {
   ) {}
 
   isSuperUserOrUserRole(roleId: number): boolean {
-    return [Roles.SUPER_USER, Roles.USER].includes(roleId);
+    return [Roles.ADMIN, Roles.USER].includes(roleId);
   }
   async createRole(createRoleDto: CreateRoleDTO): Promise<RoleResponseWrapper> {
     const existingRole = await this.roleRepository.findByRoleName(

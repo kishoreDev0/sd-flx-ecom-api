@@ -10,23 +10,51 @@ export class LoggerService implements NestLoggerService {
     this.logger = createLogger();
   }
 
-  log(message: string): void {
-    this.logger.info(message);
+  log(message: string, context?: any): void {
+    if (context) {
+      this.logger.info(`${message} ${JSON.stringify(context)}`);
+    } else {
+      this.logger.info(message);
+    }
   }
 
-  error(message: string): void {
-    this.logger.error(message);
+  error(message: string, context?: any): void {
+    if (context) {
+      this.logger.error(`${message} ${JSON.stringify(context)}`);
+    } else {
+      this.logger.error(message);
+    }
   }
 
-  warn(message: string): void {
-    this.logger.warn(message);
+  warn(message: string, context?: any): void {
+    if (context) {
+      this.logger.warn(`${message} ${JSON.stringify(context)}`);
+    } else {
+      this.logger.warn(message);
+    }
   }
 
-  debug(message: string): void {
-    this.logger.debug(message);
+  info(message: string, context?: any): void {
+    if (context) {
+      this.logger.info(`${message} ${JSON.stringify(context)}`);
+    } else {
+      this.logger.info(message);
+    }
   }
 
-  verbose(message: string): void {
-    this.logger.verbose(message);
+  debug(message: string, context?: any): void {
+    if (context) {
+      this.logger.debug(`${message} ${JSON.stringify(context)}`);
+    } else {
+      this.logger.debug(message);
+    }
+  }
+
+  verbose(message: string, context?: any): void {
+    if (context) {
+      this.logger.verbose(`${message} ${JSON.stringify(context)}`);
+    } else {
+      this.logger.verbose(message);
+    }
   }
 }

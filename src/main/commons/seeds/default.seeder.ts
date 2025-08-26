@@ -9,7 +9,7 @@ export const seedDefault = async (dataSource: DataSource): Promise<void> => {
   const roleRepository = dataSource.getRepository(Role);
 
   const superUserRole = await roleRepository.findOne({
-    where: { id: Roles.SUPER_USER },
+    where: { id: Roles.ADMIN },
   });
   const userRole = await roleRepository.findOne({
     where: { id: Roles.USER },

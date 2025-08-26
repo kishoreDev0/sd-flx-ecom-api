@@ -13,10 +13,16 @@ import { CartModule } from './main/modules/cart.module';
 import { WishlistModule } from './main/modules/wishlist.module';
 import { FeatureModule } from './main/modules/feature.module';
 import { CategoryModule } from './main/modules/category.module';
+import { BrandModule } from './main/modules/brand.module';
+import { BrandCategoryModule } from './main/modules/brand-category.module';
+import { VendorModule } from './main/modules/vendor.module';
 import { OrderModule } from './main/modules/order.module';
 import { ContactModule } from './main/modules/contact.module';
 import { StaticModule } from './main/modules/static.module';
 import { FaqModule } from './main/modules/faq.module';
+import { OrderTrackingModule } from './main/modules/order-tracking.module';
+import { NotificationModule } from './main/modules/notification.module';
+import { MiddlewareConfigModule } from './main/middleware/middleware.config';
 
 @Module({
   imports: [
@@ -31,10 +37,16 @@ import { FaqModule } from './main/modules/faq.module';
     WishlistModule,
     FeatureModule,
     CategoryModule,
+    BrandModule,
+    BrandCategoryModule,
+    VendorModule,
     OrderModule,
     ContactModule,
     StaticModule,
-    FaqModule
+    FaqModule,
+    OrderTrackingModule,
+    NotificationModule,
+    MiddlewareConfigModule
   ],
   controllers: [AppController],
   providers: [AppService, GoogleStrategy],
