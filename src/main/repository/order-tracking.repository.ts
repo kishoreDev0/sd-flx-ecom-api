@@ -1,22 +1,24 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { OrderTracking, OrderStatus } from '../entities/order-tracking.entity';
 
 @Injectable()
-export class OrderTrackingRepository extends Repository<OrderTracking> {
-  constructor(private dataSource: DataSource) {
-    super(OrderTracking, dataSource.createEntityManager());
-  }
+export class OrderTrackingRepository {
+  constructor(
+    @InjectRepository(OrderTracking)
+    private readonly repo: Repository<OrderTracking>,
+  ) {}
 
   async findById(id: number): Promise<OrderTracking> {
-    return this.findOne({
+    return this.repo.findOne({
       where: { id },
       relations: ['order', 'user'],
     });
   }
 
   async findByOrderId(orderId: number): Promise<OrderTracking[]> {
-    return this.find({
+    return this.repo.find({
       where: { orderId },
       relations: ['order', 'user'],
       order: { createdAt: 'DESC' },
@@ -24,7 +26,7 @@ export class OrderTrackingRepository extends Repository<OrderTracking> {
   }
 
   async findLatestByOrderId(orderId: number): Promise<OrderTracking> {
-    return this.findOne({
+    return this.repo.findOne({
       where: { orderId },
       relations: ['order', 'user'],
       order: { createdAt: 'DESC' },
@@ -32,7 +34,7 @@ export class OrderTrackingRepository extends Repository<OrderTracking> {
   }
 
   async findByStatus(status: OrderStatus): Promise<OrderTracking[]> {
-    return this.find({
+    return this.repo.find({
       where: { status },
       relations: ['order', 'user'],
       order: { createdAt: 'DESC' },
@@ -40,7 +42,7 @@ export class OrderTrackingRepository extends Repository<OrderTracking> {
   }
 
   async findPendingNotifications(): Promise<OrderTracking[]> {
-    return this.find({
+    return this.repo.find({
       where: { isNotificationSent: false },
       relations: ['order', 'user'],
       order: { createdAt: 'ASC' },
@@ -48,24 +50,24 @@ export class OrderTrackingRepository extends Repository<OrderTracking> {
   }
 
   async createTracking(trackingData: Partial<OrderTracking>): Promise<OrderTracking> {
-    const tracking = this.create(trackingData);
-    return this.save(tracking);
+    const tracking = this.repo.create(trackingData);
+    return this.repo.save(tracking);
   }
 
   async updateTracking(id: number, trackingData: Partial<OrderTracking>): Promise<OrderTracking> {
-    await this.update(id, trackingData);
+    await this.repo.update(id, trackingData);
     return this.findById(id);
   }
 
   async markNotificationSent(id: number): Promise<void> {
-    await this.update(id, {
+    await this.repo.update(id, {
       isNotificationSent: true,
       notificationSentAt: new Date(),
     });
   }
 
   async getOrderTrackingHistory(orderId: number): Promise<OrderTracking[]> {
-    return this.find({
+    return this.repo.find({
       where: { orderId },
       relations: ['order', 'user'],
       order: { createdAt: 'ASC' },
@@ -73,7 +75,7 @@ export class OrderTrackingRepository extends Repository<OrderTracking> {
   }
 
   async getOrdersByStatus(status: OrderStatus): Promise<OrderTracking[]> {
-    return this.find({
+    return this.repo.find({
       where: { status },
       relations: ['order', 'user'],
       order: { createdAt: 'DESC' },
@@ -81,7 +83,7 @@ export class OrderTrackingRepository extends Repository<OrderTracking> {
   }
 
   async getOrdersNeedingNotification(): Promise<OrderTracking[]> {
-    return this.find({
+    return this.repo.find({
       where: { isNotificationSent: false },
       relations: ['order', 'user'],
       order: { createdAt: 'ASC' },
@@ -96,11 +98,11 @@ export class OrderTrackingRepository extends Repository<OrderTracking> {
     cancelledOrders: number;
   }> {
     const [total, pending, shipped, delivered, cancelled] = await Promise.all([
-      this.count(),
-      this.count({ where: { status: OrderStatus.PENDING } }),
-      this.count({ where: { status: OrderStatus.SHIPPED } }),
-      this.count({ where: { status: OrderStatus.DELIVERED } }),
-      this.count({ where: { status: OrderStatus.CANCELLED } }),
+      this.repo.count(),
+      this.repo.count({ where: { status: OrderStatus.PENDING } }),
+      this.repo.count({ where: { status: OrderStatus.SHIPPED } }),
+      this.repo.count({ where: { status: OrderStatus.DELIVERED } }),
+      this.repo.count({ where: { status: OrderStatus.CANCELLED } }),
     ]);
 
     return {

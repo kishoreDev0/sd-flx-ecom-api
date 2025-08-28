@@ -10,9 +10,9 @@ import { LoggerModule } from './logger.module'; // assuming this exists
 import { User } from '../entities/user.entity';
 import { UserSessionModule } from './user-session.module';
 import { AuthenticationModule } from './authentication.module';
-import { BrandRepository } from '../repository/brand.repository';
-import { VendorRepository } from '../repository/vendor.repository';
-import { BrandCategoryRepository } from '../repository/brand-category.repository';
+import { BrandModule } from './brand.module';
+import { VendorModule } from './vendor.module';
+import { BrandCategoryModule } from './brand-category.module';
 
 @Module({
   imports: [
@@ -22,8 +22,11 @@ import { BrandCategoryRepository } from '../repository/brand-category.repository
     forwardRef(() => UserModule),
     forwardRef(() => UserSessionModule),
     forwardRef(() => AuthenticationModule),
+    forwardRef(() => BrandModule),
+    forwardRef(() => VendorModule),
+    forwardRef(() => BrandCategoryModule),
   ],
-  providers: [ProductService, ProductRepository, BrandRepository, VendorRepository, BrandCategoryRepository],
+  providers: [ProductService, ProductRepository],
   controllers: [ProductController],
   exports: [ProductService,ProductRepository],
 })

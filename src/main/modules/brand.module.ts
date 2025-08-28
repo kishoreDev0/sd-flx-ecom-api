@@ -10,6 +10,9 @@ import { LoggerModule } from './logger.module';
 import { AuthenticationModule } from './authentication.module';
 import { UserSessionModule } from './user-session.module';
 import { ProductModule } from './product.module';
+import { UserModule } from './user.module';
+import { CommonUtilService } from '../utils/common.util';
+import { VendorModule } from './vendor.module';
 
 @Module({
   imports: [
@@ -18,12 +21,15 @@ import { ProductModule } from './product.module';
     forwardRef(() => UserSessionModule),
     forwardRef(() => AuthenticationModule),
     forwardRef(() => ProductModule),
+    UserModule,
+    forwardRef(() => VendorModule),
   ],
   controllers: [BrandController],
   providers: [
     BrandService,
     BrandRepository,
     UserRepository,
+    CommonUtilService,
   ],
   exports: [BrandService, BrandRepository],
 })

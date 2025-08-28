@@ -22,7 +22,7 @@ import { StaticModule } from './main/modules/static.module';
 import { FaqModule } from './main/modules/faq.module';
 import { OrderTrackingModule } from './main/modules/order-tracking.module';
 import { NotificationModule } from './main/modules/notification.module';
-import { MiddlewareConfigModule } from './main/middleware/middleware.config';
+// import { MiddlewareConfigModule } from './main/middleware/middleware.config';
 
 @Module({
   imports: [
@@ -46,7 +46,7 @@ import { MiddlewareConfigModule } from './main/middleware/middleware.config';
     FaqModule,
     OrderTrackingModule,
     NotificationModule,
-    MiddlewareConfigModule
+    // MiddlewareConfigModule
   ],
   controllers: [AppController],
   providers: [AppService, GoogleStrategy],

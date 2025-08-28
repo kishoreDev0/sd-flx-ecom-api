@@ -1,15 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { ProductRating } from '../entities/product-rating.entity';
 
 @Injectable()
-export class ProductRatingRepository extends Repository<ProductRating> {
-  constructor(private dataSource: DataSource) {
-    super(ProductRating, dataSource.createEntityManager());
-  }
+export class ProductRatingRepository {
+  constructor(
+    @InjectRepository(ProductRating)
+    private readonly repo: Repository<ProductRating>,
+  ) {}
 
   async findById(id: number): Promise<ProductRating> {
-    return this.findOne({
+    return this.repo.findOne({
       where: { id },
       relations: ['user', 'product'],
     });
@@ -23,7 +25,7 @@ export class ProductRatingRepository extends Repository<ProductRating> {
     sortBy?: 'rating' | 'createdAt' | 'isHelpful';
     sortOrder?: 'ASC' | 'DESC';
   }): Promise<ProductRating[]> {
-    const queryBuilder = this.createQueryBuilder('rating')
+    const queryBuilder = this.repo.createQueryBuilder('rating')
       .leftJoinAndSelect('rating.user', 'user')
       .leftJoinAndSelect('rating.product', 'product')
       .where('rating.productId = :productId', { productId });
@@ -65,7 +67,7 @@ export class ProductRatingRepository extends Repository<ProductRating> {
   }
 
   async findByUserId(userId: number): Promise<ProductRating[]> {
-    return this.find({
+    return this.repo.find({
       where: { userId },
       relations: ['user', 'product'],
       order: { createdAt: 'DESC' },
@@ -73,14 +75,14 @@ export class ProductRatingRepository extends Repository<ProductRating> {
   }
 
   async findByUserAndProduct(userId: number, productId: number): Promise<ProductRating> {
-    return this.findOne({
+    return this.repo.findOne({
       where: { userId, productId },
       relations: ['user', 'product'],
     });
   }
 
   async findPendingApproval(): Promise<ProductRating[]> {
-    return this.find({
+    return this.repo.find({
       where: { isApproved: false, isActive: true },
       relations: ['user', 'product'],
       order: { createdAt: 'ASC' },
@@ -88,7 +90,7 @@ export class ProductRatingRepository extends Repository<ProductRating> {
   }
 
   async findApprovedByProduct(productId: number): Promise<ProductRating[]> {
-    return this.find({
+    return this.repo.find({
       where: { productId, isApproved: true, isActive: true },
       relations: ['user', 'product'],
       order: { createdAt: 'DESC' },
@@ -96,37 +98,37 @@ export class ProductRatingRepository extends Repository<ProductRating> {
   }
 
   async createRating(ratingData: Partial<ProductRating>): Promise<ProductRating> {
-    const rating = this.create(ratingData);
-    return this.save(rating);
+    const rating = this.repo.create(ratingData);
+    return this.repo.save(rating);
   }
 
   async updateRating(id: number, ratingData: Partial<ProductRating>): Promise<ProductRating> {
-    await this.update(id, ratingData);
+    await this.repo.update(id, ratingData);
     return this.findById(id);
   }
 
   async deleteRating(id: number): Promise<void> {
-    await this.delete(id);
+    await this.repo.delete(id);
   }
 
   async softDeleteRating(id: number): Promise<void> {
-    await this.update(id, { isActive: false });
+    await this.repo.update(id, { isActive: false });
   }
 
   async restoreRating(id: number): Promise<void> {
-    await this.update(id, { isActive: true });
+    await this.repo.update(id, { isActive: true });
   }
 
   async approveRating(id: number, isApproved: boolean): Promise<void> {
-    await this.update(id, { isApproved });
+    await this.repo.update(id, { isApproved });
   }
 
   async incrementHelpfulCount(id: number): Promise<void> {
-    await this.increment({ id }, 'isHelpful', 1);
+    await this.repo.increment({ id }, 'isHelpful', 1);
   }
 
   async decrementHelpfulCount(id: number): Promise<void> {
-    await this.decrement({ id }, 'isHelpful', 1);
+    await this.repo.decrement({ id }, 'isHelpful', 1);
   }
 
   async getProductRatingStats(productId: number): Promise<{
@@ -138,7 +140,7 @@ export class ProductRatingRepository extends Repository<ProductRating> {
     pendingReviews: number;
   }> {
     // Get average rating and total count
-    const avgResult = await this.createQueryBuilder('rating')
+    const avgResult = await this.repo.createQueryBuilder('rating')
       .select('AVG(rating.rating)', 'averageRating')
       .addSelect('COUNT(*)', 'totalRatings')
       .where('rating.productId = :productId', { productId })
@@ -146,7 +148,7 @@ export class ProductRatingRepository extends Repository<ProductRating> {
       .getRawOne();
 
     // Get verified purchases count
-    const verifiedResult = await this.createQueryBuilder('rating')
+    const verifiedResult = await this.repo.createQueryBuilder('rating')
       .select('COUNT(*)', 'verifiedPurchases')
       .where('rating.productId = :productId', { productId })
       .andWhere('rating.isVerifiedPurchase = :isVerified', { isVerified: true })
@@ -154,7 +156,7 @@ export class ProductRatingRepository extends Repository<ProductRating> {
       .getRawOne();
 
     // Get rating distribution
-    const distributionResult = await this.createQueryBuilder('rating')
+    const distributionResult = await this.repo.createQueryBuilder('rating')
       .select('rating.rating', 'rating')
       .addSelect('COUNT(*)', 'count')
       .where('rating.productId = :productId', { productId })
@@ -163,14 +165,14 @@ export class ProductRatingRepository extends Repository<ProductRating> {
       .getRawMany();
 
     // Get approved and pending counts
-    const approvedResult = await this.createQueryBuilder('rating')
+    const approvedResult = await this.repo.createQueryBuilder('rating')
       .select('COUNT(*)', 'approvedReviews')
       .where('rating.productId = :productId', { productId })
       .andWhere('rating.isApproved = :isApproved', { isApproved: true })
       .andWhere('rating.isActive = :isActive', { isActive: true })
       .getRawOne();
 
-    const pendingResult = await this.createQueryBuilder('rating')
+    const pendingResult = await this.repo.createQueryBuilder('rating')
       .select('COUNT(*)', 'pendingReviews')
       .where('rating.productId = :productId', { productId })
       .andWhere('rating.isApproved = :isApproved', { isApproved: false })
@@ -206,7 +208,7 @@ export class ProductRatingRepository extends Repository<ProductRating> {
     totalProducts: number;
     totalUsers: number;
   }> {
-    const stats = await this.createQueryBuilder('rating')
+    const stats = await this.repo.createQueryBuilder('rating')
       .select('COUNT(*)', 'totalRatings')
       .addSelect('AVG(rating.rating)', 'averageRating')
       .addSelect('COUNT(DISTINCT rating.productId)', 'totalProducts')

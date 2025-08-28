@@ -18,10 +18,8 @@ import morgan from 'morgan';
 export async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   
-  // Apply security middlewares
+  // Minimal middleware for now
   app.use(helmet());
-  app.use(compression());
-  app.use(morgan('combined'));
   
   // Apply request parsing with limits
   app.use(json({ limit: '10mb' }));

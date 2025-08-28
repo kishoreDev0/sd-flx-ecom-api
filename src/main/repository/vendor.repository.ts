@@ -1,36 +1,38 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { Vendor } from '../entities/vendor.entity';
 
 @Injectable()
-export class VendorRepository extends Repository<Vendor> {
-  constructor(private dataSource: DataSource) {
-    super(Vendor, dataSource.createEntityManager());
-  }
+export class VendorRepository {
+  constructor(
+    @InjectRepository(Vendor)
+    private readonly repo: Repository<Vendor>,
+  ) {}
 
   async findVendorById(id: number): Promise<Vendor> {
-    return this.findOne({
+    return this.repo.findOne({
       where: { id },
       relations: ['user', 'createdBy', 'updatedBy', 'brands', 'products'],
     });
   }
 
   async findVendorByUserId(userId: number): Promise<Vendor> {
-    return this.findOne({
+    return this.repo.findOne({
       where: { user: { id: userId } },
       relations: ['user', 'createdBy', 'updatedBy', 'brands', 'products'],
     });
   }
 
   async findAllVendors(): Promise<Vendor[]> {
-    return this.find({
+    return this.repo.find({
       relations: ['user', 'createdBy', 'updatedBy', 'brands', 'products'],
       order: { vendorName: 'ASC' },
     });
   }
 
   async findActiveVendors(): Promise<Vendor[]> {
-    return this.find({
+    return this.repo.find({
       where: { isActive: true },
       relations: ['user', 'createdBy', 'updatedBy'],
       order: { vendorName: 'ASC' },
@@ -38,7 +40,7 @@ export class VendorRepository extends Repository<Vendor> {
   }
 
   async findVerifiedVendors(): Promise<Vendor[]> {
-    return this.find({
+    return this.repo.find({
       where: { isVerified: true, isActive: true },
       relations: ['user', 'createdBy', 'updatedBy'],
       order: { vendorName: 'ASC' },
@@ -46,7 +48,7 @@ export class VendorRepository extends Repository<Vendor> {
   }
 
   async findPendingVerificationVendors(): Promise<Vendor[]> {
-    return this.find({
+    return this.repo.find({
       where: { isVerified: false, isActive: true },
       relations: ['user', 'createdBy', 'updatedBy'],
       order: { createdAt: 'ASC' },
@@ -54,25 +56,25 @@ export class VendorRepository extends Repository<Vendor> {
   }
 
   async createVendor(vendorData: Partial<Vendor>): Promise<Vendor> {
-    const vendor = this.create(vendorData);
-    return this.save(vendor);
+    const vendor = this.repo.create(vendorData);
+    return this.repo.save(vendor);
   }
 
   async updateVendor(id: number, vendorData: Partial<Vendor>): Promise<Vendor> {
-    await this.update(id, vendorData);
+    await this.repo.update(id, vendorData);
     return this.findVendorById(id);
   }
 
   async deleteVendor(id: number): Promise<void> {
-    await this.delete(id);
+    await this.repo.delete(id);
   }
 
   async softDeleteVendor(id: number): Promise<void> {
-    await this.update(id, { isActive: false });
+    await this.repo.update(id, { isActive: false });
   }
 
   async restoreVendor(id: number): Promise<void> {
-    await this.update(id, { isActive: true });
+    await this.repo.update(id, { isActive: true });
   }
 
   async verifyVendor(id: number, verificationData: any): Promise<Vendor> {
@@ -80,7 +82,7 @@ export class VendorRepository extends Repository<Vendor> {
       ...verificationData,
       verificationDate: new Date(),
     };
-    await this.update(id, updateData);
+    await this.repo.update(id, updateData);
     return this.findVendorById(id);
   }
 

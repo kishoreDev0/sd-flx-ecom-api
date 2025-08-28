@@ -22,24 +22,24 @@ import { LoggerModule } from '../modules/logger.module';
 })
 export class MiddlewareConfigModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    // Apply security middleware to all routes
-    consumer
-      .apply(SecurityMiddleware)
-      .forRoutes('*');
+    // // Apply security middleware to all routes
+    // consumer
+    //   .apply(SecurityMiddleware)
+    //   .forRoutes('*');
 
-    // Apply rate limiting to all routes
-    consumer
-      .apply(RateLimitMiddleware)
-      .forRoutes('*');
+    // // Apply rate limiting to all routes
+    // consumer
+    //   .apply(RateLimitMiddleware)
+    //   .forRoutes('*');
 
-    // Apply request validation to all routes
-    consumer
-      .apply(RequestValidationMiddleware)
-      .forRoutes('*');
+    // // Apply request validation to all routes
+    // consumer
+    //   .apply(RequestValidationMiddleware)
+    //   .forRoutes('*');
 
-    // Apply security logging to all routes
-    consumer
-      .apply(SecurityLoggingMiddleware)
-      .forRoutes('*');
+    // // Apply security logging to all routes
+    // consumer
+    //   .apply(SecurityLoggingMiddleware)
+    //   .forRoutes('*');
   }
 }

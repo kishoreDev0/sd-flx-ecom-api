@@ -15,7 +15,7 @@ export const setupSwagger = (
   const document = SwaggerModule.createDocument(app, options);
   sortSwaggerTags(document);
   fs.writeFileSync('./swagger-spec.json', JSON.stringify(document));
-  SwaggerModule.setup(`${globalPrefix}`, app, document);
+  SwaggerModule.setup(`${globalPrefix}/docs`, app, document);
 };
 
 function sortSwaggerTags(document: OpenAPIObject): void {

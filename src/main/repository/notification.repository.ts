@@ -1,15 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { Notification, NotificationStatus, NotificationType } from '../entities/notification.entity';
 
 @Injectable()
-export class NotificationRepository extends Repository<Notification> {
-  constructor(private dataSource: DataSource) {
-    super(Notification, dataSource.createEntityManager());
-  }
+export class NotificationRepository {
+  constructor(
+    @InjectRepository(Notification)
+    private readonly repo: Repository<Notification>,
+  ) {}
 
   async findById(id: number): Promise<Notification> {
-    return this.findOne({
+    return this.repo.findOne({
       where: { id },
       relations: ['user'],
     });
@@ -21,7 +23,7 @@ export class NotificationRepository extends Repository<Notification> {
     unreadOnly?: boolean;
     type?: NotificationType;
   }): Promise<Notification[]> {
-    const queryBuilder = this.createQueryBuilder('notification')
+    const queryBuilder = this.repo.createQueryBuilder('notification')
       .leftJoinAndSelect('notification.user', 'user')
       .where('notification.userId = :userId', { userId });
 
@@ -47,7 +49,7 @@ export class NotificationRepository extends Repository<Notification> {
   }
 
   async findPendingNotifications(): Promise<Notification[]> {
-    return this.find({
+    return this.repo.find({
       where: { status: NotificationStatus.PENDING },
       relations: ['user'],
       order: { createdAt: 'ASC' },
@@ -55,7 +57,7 @@ export class NotificationRepository extends Repository<Notification> {
   }
 
   async findFailedNotifications(): Promise<Notification[]> {
-    return this.find({
+    return this.repo.find({
       where: { status: NotificationStatus.FAILED },
       relations: ['user'],
       order: { createdAt: 'DESC' },
@@ -63,17 +65,17 @@ export class NotificationRepository extends Repository<Notification> {
   }
 
   async createNotification(notificationData: Partial<Notification>): Promise<Notification> {
-    const notification = this.create(notificationData);
-    return this.save(notification);
+    const notification = this.repo.create(notificationData);
+    return this.repo.save(notification);
   }
 
   async updateNotification(id: number, notificationData: Partial<Notification>): Promise<Notification> {
-    await this.update(id, notificationData);
+    await this.repo.update(id, notificationData);
     return this.findById(id);
   }
 
   async markAsRead(id: number): Promise<void> {
-    await this.update(id, {
+    await this.repo.update(id, {
       isRead: true,
       readAt: new Date(),
       status: NotificationStatus.READ,
@@ -81,21 +83,21 @@ export class NotificationRepository extends Repository<Notification> {
   }
 
   async markAsSent(id: number): Promise<void> {
-    await this.update(id, {
+    await this.repo.update(id, {
       status: NotificationStatus.SENT,
       sentAt: new Date(),
     });
   }
 
   async markAsDelivered(id: number): Promise<void> {
-    await this.update(id, {
+    await this.repo.update(id, {
       status: NotificationStatus.DELIVERED,
       deliveredAt: new Date(),
     });
   }
 
   async markAsFailed(id: number, reason: string): Promise<void> {
-    await this.update(id, {
+    await this.repo.update(id, {
       status: NotificationStatus.FAILED,
       failedAt: new Date(),
       failureReason: reason,
@@ -103,14 +105,14 @@ export class NotificationRepository extends Repository<Notification> {
   }
 
   async getUnreadCount(userId: number): Promise<number> {
-    return this.count({
+    return this.repo.count({
       where: { userId, isRead: false },
     });
   }
 
   async deleteExpiredNotifications(): Promise<void> {
     const now = new Date();
-    await this.createQueryBuilder()
+    await this.repo.createQueryBuilder()
       .delete()
       .where('expiresAt IS NOT NULL AND expiresAt < :now', { now })
       .execute();
@@ -124,7 +126,7 @@ export class NotificationRepository extends Repository<Notification> {
     delivered: number;
     failed: number;
   }> {
-    const queryBuilder = this.createQueryBuilder('notification');
+    const queryBuilder = this.repo.createQueryBuilder('notification');
 
     if (userId) {
       queryBuilder.where('notification.userId = :userId', { userId });
@@ -150,12 +152,12 @@ export class NotificationRepository extends Repository<Notification> {
   }
 
   async bulkCreateNotifications(notifications: Partial<Notification>[]): Promise<Notification[]> {
-    const createdNotifications = this.create(notifications);
-    return this.save(createdNotifications);
+    const createdNotifications = this.repo.create(notifications);
+    return this.repo.save(createdNotifications);
   }
 
   async markAllAsRead(userId: number): Promise<void> {
-    await this.update(
+    await this.repo.update(
       { userId, isRead: false },
       {
         isRead: true,

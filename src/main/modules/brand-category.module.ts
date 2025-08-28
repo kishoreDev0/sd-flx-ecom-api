@@ -15,6 +15,8 @@ import { AuthenticationModule } from './authentication.module';
 import { UserSessionModule } from './user-session.module';
 import { BrandModule } from './brand.module';
 import { CategoryModule } from './category.module';
+import { UserModule } from './user.module';
+import { CommonUtilService } from '../utils/common.util';
 
 @Module({
   imports: [
@@ -24,6 +26,7 @@ import { CategoryModule } from './category.module';
     forwardRef(() => AuthenticationModule),
     forwardRef(() => BrandModule),
     forwardRef(() => CategoryModule),
+    UserModule,
   ],
   controllers: [BrandCategoryController],
   providers: [
@@ -32,6 +35,7 @@ import { CategoryModule } from './category.module';
     BrandRepository,
     CategoryRepository,
     UserRepository,
+    CommonUtilService,
   ],
   exports: [BrandCategoryService, BrandCategoryRepository],
 })
