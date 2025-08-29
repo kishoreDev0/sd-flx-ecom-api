@@ -26,6 +26,8 @@ import { Public } from '../commons/decorators/public.decorator';
 import { CommonUtilService } from '../utils/common.util';
 import { LoggerService } from '../service/logger.service';
 import { Roles } from '../commons/enumerations/role.enum';
+import { RequireRoles } from '../commons/guards/roles.decorator';
+import { RolesGuard } from '../commons/guards/roles.guard';
 
 @ApiTags('Vendors')
 @Controller('v1/vendors')
@@ -39,6 +41,8 @@ export class VendorController {
   ) {}
 
   @Post()
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequireRoles(Roles.ADMIN)
   @ApiResponse({ status: 201, type: VendorResponseWrapper })
   async create(@Body() createVendorDto: CreateVendorDto, @Req() req: any) {
     try {
@@ -167,6 +171,8 @@ export class VendorController {
   }
 
   @Patch(':id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequireRoles(Roles.ADMIN)
   @ApiResponse({ status: 200, type: VendorResponseWrapper })
   async update(
     @Param('id', ParseIntPipe) id: number,
@@ -217,6 +223,8 @@ export class VendorController {
   }
 
   @Patch(':id/verify')
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequireRoles(Roles.ADMIN)
   @ApiResponse({ status: 200, type: VendorResponseWrapper })
   async verify(
     @Param('id', ParseIntPipe) id: number,
@@ -246,6 +254,8 @@ export class VendorController {
   }
 
   @Delete(':id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequireRoles(Roles.ADMIN)
   @ApiResponse({ status: 200, description: 'Vendor deleted successfully' })
   async remove(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
     try {
@@ -270,6 +280,8 @@ export class VendorController {
   }
 
   @Patch(':id/soft-delete')
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequireRoles(Roles.ADMIN)
   @ApiResponse({ status: 200, description: 'Vendor soft deleted successfully' })
   async softDelete(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
     try {
@@ -294,7 +306,53 @@ export class VendorController {
   }
 
   @Patch(':id/restore')
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequireRoles(Roles.ADMIN)
   @ApiResponse({ status: 200, description: 'Vendor restored successfully' })
+
+  @Patch(':id/payout-settings')
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequireRoles(Roles.ADMIN)
+  @ApiResponse({ status: 200, type: VendorResponseWrapper })
+  async updatePayout(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: { payoutMethod?: string; payoutAccount?: string; updatedBy: number },
+  ) {
+    try {
+      const adminUser = await this.commonUtilService.getUserById(body.updatedBy);
+      const vendor = await this.vendorService.updatePayoutSettings(id, {
+        payoutMethod: body.payoutMethod,
+        payoutAccount: body.payoutAccount,
+        updatedBy: adminUser,
+      });
+      return { success: true, message: 'Payout settings updated', data: vendor };
+    } catch (error) {
+      this.loggerService.error('Error updating payout settings', error);
+      throw error;
+    }
+  }
+
+  @Patch(':id/kyc')
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequireRoles(Roles.ADMIN)
+  @ApiResponse({ status: 200, type: VendorResponseWrapper })
+  async updateKyc(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: { kycStatus: string; kycDocuments?: any[]; updatedBy: number },
+  ) {
+    try {
+      const adminUser = await this.commonUtilService.getUserById(body.updatedBy);
+      const vendor = await this.vendorService.updateKycStatus(id, {
+        kycStatus: body.kycStatus,
+        kycDocuments: body.kycDocuments,
+        updatedBy: adminUser,
+      });
+      return { success: true, message: 'KYC updated', data: vendor };
+    } catch (error) {
+      this.loggerService.error('Error updating KYC', error);
+      throw error;
+    }
+  }
   async restore(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
     try {
       const userId = this.commonUtilService.getUserIdFromRequest(req);

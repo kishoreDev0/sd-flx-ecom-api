@@ -26,7 +26,7 @@ import { CommonUtilService } from '../utils/common.util';
 import { USER_RESPONSES } from '../commons/constants/response-constants/user.constant';
 import {
   ChangePasswordResponseDto,
-  FailureResposneDto,
+  FailureResponseDto,
   ForgotPasswordResponseDto,
   GeneratePasswordResponseDto,
   LoginResponseDto,
@@ -38,6 +38,9 @@ import { InviteUserRequestDto } from '../dto/requests/auth/invite-user.dto';
 import { UserResponseWrapper } from '../dto/responses/user-response.dto';
 import { AuthGuard as PassportAuthGuard } from '@nestjs/passport';
 import { GoogleService } from '../google-sign-in/google.service';
+import { Public } from '../commons/decorators/public.decorator';
+import { RegisterUserDto } from '../dto/requests/auth/register-user.dto';
+import { RegisterVendorDto } from '../dto/requests/auth/register-vendor.dto';
 
 @ApiTags('Authentication')
 @Controller('v1/authentication')
@@ -65,7 +68,7 @@ export class AuthenticationController {
     @Req() req: Request,
   ): Promise<
     | InviteUserResponseWrapper
-    | FailureResposneDto
+    | FailureResponseDto
     | UserResponseWrapper
     | object
   > {
@@ -94,7 +97,7 @@ export class AuthenticationController {
     @Req() req: Request,
   ): Promise<
     | InviteUserResponseWrapper
-    | FailureResposneDto
+    | FailureResponseDto
     | UserResponseWrapper
     | object
   > {
@@ -111,6 +114,7 @@ export class AuthenticationController {
 
 
   @Post('login')
+  @Public()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'User login' })
   async login(@Body() loginDto: LoginDto): Promise<LoginResponseDto> {
@@ -125,6 +129,54 @@ export class AuthenticationController {
     }
   }
 
+  @Post('vendor-login')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Vendor login' })
+  async vendorLogin(@Body() loginDto: LoginDto): Promise<LoginResponseDto> {
+    try {
+      return await this.authenticationService.loginVendor(loginDto);
+    } catch (error) {
+      this.logger.error('Failed to login (vendor)', error.stack);
+      throw new HttpException(
+        'An error occurred while logging in (vendor)',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post('admin-login')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Admin login' })
+  async adminLogin(@Body() loginDto: LoginDto): Promise<LoginResponseDto> {
+    try {
+      return await this.authenticationService.loginAdmin(loginDto);
+    } catch (error) {
+      this.logger.error('Failed to login (admin)', error.stack);
+      throw new HttpException(
+        'An error occurred while logging in (admin)',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post('register/user')
+  @Public()
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Register a new user' })
+  async registerUser(@Body() dto: RegisterUserDto) {
+    return this.authenticationService.registerUser(dto);
+  }
+
+  @Post('register/vendor')
+  @Public()
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Register a new vendor (awaits admin approval)' })
+  async registerVendor(@Body() dto: RegisterVendorDto) {
+    return this.authenticationService.registerVendor(dto);
+  }
+
   @Get('google')
   @UseGuards(PassportAuthGuard('google'))
   @ApiOperation({ summary: 'Initiate Google Auth' })
@@ -137,7 +189,7 @@ export class AuthenticationController {
   @ApiOperation({ summary: 'Handle Google redirect' })
   async googleAuthRedirect(
     @Req() req,
-  ): Promise<LoginResponseDto | FailureResposneDto> {
+  ): Promise<LoginResponseDto | FailureResponseDto> {
     try {
       const googleResult = await this.googleService.googleLogin(req);
 
@@ -163,7 +215,7 @@ export class AuthenticationController {
   @ApiOperation({ summary: 'Request password reset' })
   async forgotPassword(
     @Body() forgotPasswordDto: ForgotPasswordDto,
-  ): Promise<ForgotPasswordResponseDto | FailureResposneDto> {
+  ): Promise<ForgotPasswordResponseDto | FailureResponseDto> {
     try {
       return await this.authenticationService.forgotPassword(forgotPasswordDto);
     } catch (error) {
@@ -189,7 +241,7 @@ export class AuthenticationController {
   async recoverPassword(
     @Headers('resetToken') resetToken: string,
     @Body() changePasswordDto: ChangePasswordDto,
-  ): Promise<ChangePasswordResponseDto | FailureResposneDto> {
+  ): Promise<ChangePasswordResponseDto | FailureResponseDto> {
     try {
       return await this.authenticationService.changePassword(
         resetToken,
@@ -211,7 +263,7 @@ export class AuthenticationController {
   @ApiOperation({ summary: 'Reset password for authenticated user' })
   async resetPassword(
     @Body() resetPasswordDto: ResetPasswordDto,
-  ): Promise<ResetPasswordResponseDto | FailureResposneDto> {
+  ): Promise<ResetPasswordResponseDto | FailureResponseDto> {
     try {
       return await this.authenticationService.resetPassword(resetPasswordDto);
     } catch (error) {
@@ -232,7 +284,7 @@ export class AuthenticationController {
     @Body() generatePasswordDto: GeneratePasswordDto,
     @Req() req: Request,
   ): Promise<
-    GeneratePasswordResponseDto | FailureResposneDto | UserResponseWrapper
+    GeneratePasswordResponseDto | FailureResponseDto | UserResponseWrapper
   > {
     try {
       const userId = this.commonUtilService.getUserIdFromRequest(req);
@@ -267,7 +319,7 @@ export class AuthenticationController {
   async logout(
     @Headers('user-id') userId: number,
     @Headers('access-token') token: string,
-  ): Promise<LogoutResponseDto | FailureResposneDto> {
+  ): Promise<LogoutResponseDto | FailureResponseDto> {
     try {
       return await this.authenticationService.logout(userId, token);
     } catch (error) {

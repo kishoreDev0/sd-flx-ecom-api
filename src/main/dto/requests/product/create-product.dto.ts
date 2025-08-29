@@ -25,6 +25,15 @@ export class CreateProductDto {
   @IsString({ each: true })
   imagesPath?: string[];
 
+  @IsOptional()
+  @IsArray()
+  variants?: Array<{
+    sku: string;
+    attributes: Record<string, string>;
+    price?: number;
+    stock?: number;
+  }>;
+
   @IsNumber()
   @Type(() => Number)
   categoryId: number;

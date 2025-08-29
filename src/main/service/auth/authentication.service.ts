@@ -20,7 +20,7 @@ import { GeneratePasswordDto } from 'src/main/dto/requests/auth/generate-passwor
 import { AUTH_RESPONSES } from 'src/main/commons/constants/response-constants/auth.constant';
 import {
   ChangePasswordResponseDto,
-  FailureResposneDto,
+  FailureResponseDto,
   ForgotPasswordResponseDto,
   GeneratePasswordResponseDto,
   LoginResponseDto,
@@ -29,6 +29,10 @@ import {
 } from 'src/main/dto/responses/auth.response.dto';
 import { silentLogin } from 'src/main/dto/requests/auth/silent-login.dto';
 import { UserSessionService } from '../user-session.service';
+import { RegisterUserDto } from 'src/main/dto/requests/auth/register-user.dto';
+import { RegisterVendorDto } from 'src/main/dto/requests/auth/register-vendor.dto';
+import { RoleRepository } from 'src/main/repository/role.repository';
+import { VendorRepository } from 'src/main/repository/vendor.repository';
 
 @Injectable()
 export class AuthenticationService {
@@ -38,6 +42,8 @@ export class AuthenticationService {
     private readonly mailService: MailService,
     private readonly logger: LoggerService,
     private readonly userSessionService: UserSessionService,
+    private readonly roleRepository: RoleRepository,
+    private readonly vendorRepository: VendorRepository,
   ) {}
 
   async getUser(userId: number): Promise<User> {
@@ -92,9 +98,117 @@ export class AuthenticationService {
     return AUTH_RESPONSES.LOGIN_SUCCESS(userDetails, sessionResposne);
   }
 
+  async loginVendor(loginDto: LoginDto): Promise<LoginResponseDto> {
+    const { email, password } = loginDto;
+    this.logger.log(`Vendor attempting to login with email: ${email}`);
+
+    const userContact = await this.userRepository.findByEmail(email);
+    if (!userContact) {
+      this.logger.error(`User not found with email: ${email}`);
+      return AUTH_RESPONSES.USER_NOT_FOUND();
+    }
+
+    const user = await this.userRepository.findUserWithFullDetails(
+      userContact.id,
+    );
+    if (!user) {
+      this.logger.error(`User not found with email: ${email}`);
+      return AUTH_RESPONSES.USER_NOT_FOUND();
+    }
+
+    // Require vendor role
+    if (!user.role || user.role.roleName !== 'Vendor') {
+      return AUTH_RESPONSES.CUSTOM_MESSAGE('Account is not a vendor', 403);
+    }
+
+    if (!user.isActive) {
+      this.logger.error(`User is not Active: ${email}`);
+      return AUTH_RESPONSES.USER_NOT_ACTIVE();
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      this.logger.error(`Invalid credentials for email: ${email}`);
+      return AUTH_RESPONSES.INVALID_CREDENTIALS();
+    }
+
+    user.lastLoginTime = new Date();
+    await this.userRepository.save(user);
+
+    const session = this.userSessionRepository.create({
+      user,
+      token: crypto.randomBytes(50).toString('hex'),
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    });
+
+    await this.userSessionRepository.save(session);
+    const sessionResposne = {
+      token: session.token,
+      expiresAt: session.expiresAt,
+    };
+
+    const userDetails = this.extractUserDetails(user);
+    this.logger.log(`Vendor login successful for email: ${email}`);
+    return AUTH_RESPONSES.LOGIN_SUCCESS(userDetails, sessionResposne);
+  }
+
+  async loginAdmin(loginDto: LoginDto): Promise<LoginResponseDto> {
+    const { email, password } = loginDto;
+    this.logger.log(`Admin attempting to login with email: ${email}`);
+
+    const userContact = await this.userRepository.findByEmail(email);
+    if (!userContact) {
+      this.logger.error(`User not found with email: ${email}`);
+      return AUTH_RESPONSES.USER_NOT_FOUND();
+    }
+
+    const user = await this.userRepository.findUserWithFullDetails(
+      userContact.id,
+    );
+    if (!user) {
+      this.logger.error(`User not found with email: ${email}`);
+      return AUTH_RESPONSES.USER_NOT_FOUND();
+    }
+
+    // Require admin role
+    if (!user.role || user.role.roleName !== 'Admin') {
+      return AUTH_RESPONSES.CUSTOM_MESSAGE('Account is not an admin', 403);
+    }
+
+    if (!user.isActive) {
+      this.logger.error(`User is not Active: ${email}`);
+      return AUTH_RESPONSES.USER_NOT_ACTIVE();
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      this.logger.error(`Invalid credentials for email: ${email}`);
+      return AUTH_RESPONSES.INVALID_CREDENTIALS();
+    }
+
+    user.lastLoginTime = new Date();
+    await this.userRepository.save(user);
+
+    const session = this.userSessionRepository.create({
+      user,
+      token: crypto.randomBytes(50).toString('hex'),
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    });
+
+    await this.userSessionRepository.save(session);
+    const sessionResposne = {
+      token: session.token,
+      expiresAt: session.expiresAt,
+    };
+
+    const userDetails = this.extractUserDetails(user);
+    this.logger.log(`Admin login successful for email: ${email}`);
+    return AUTH_RESPONSES.LOGIN_SUCCESS(userDetails, sessionResposne);
+  }
+
   async handleGoogleAuth(
     googleUser: any,
-  ): Promise<LoginResponseDto | FailureResposneDto> {
+  ): Promise<LoginResponseDto | FailureResponseDto> {
     const { email } = googleUser;
 
     const userContact = await this.userRepository.findByEmail(email);
@@ -139,7 +253,7 @@ export class AuthenticationService {
 
   async forgotPassword(
     forgotPasswordDto: ForgotPasswordDto,
-  ): Promise<ForgotPasswordResponseDto | FailureResposneDto> {
+  ): Promise<ForgotPasswordResponseDto | FailureResponseDto> {
     this.logger.log(
       `Forgot password request for email: ${forgotPasswordDto.officialEmail}`,
     );
@@ -172,7 +286,7 @@ export class AuthenticationService {
   async changePassword(
     reset_token: string,
     changePasswordDto: ChangePasswordDto,
-  ): Promise<ChangePasswordResponseDto | FailureResposneDto> {
+  ): Promise<ChangePasswordResponseDto | FailureResponseDto> {
     this.logger.log(`Change password request with reset token: ${reset_token}`);
 
     const user = await this.userRepository.findUserByResetToken(reset_token);
@@ -203,7 +317,7 @@ export class AuthenticationService {
 
   async resetPassword(
     resetPasswordDto: ResetPasswordDto,
-  ): Promise<ResetPasswordResponseDto | FailureResposneDto> {
+  ): Promise<ResetPasswordResponseDto | FailureResponseDto> {
     this.logger.log(
       `Reset password request for user ID: ${resetPasswordDto.userId}`,
     );
@@ -246,7 +360,7 @@ export class AuthenticationService {
 
   async generatePassword(
     generatePasswordDto: GeneratePasswordDto,
-  ): Promise<GeneratePasswordResponseDto | FailureResposneDto> {
+  ): Promise<GeneratePasswordResponseDto | FailureResponseDto> {
     try {
       const {
         user: { id },
@@ -288,6 +402,53 @@ export class AuthenticationService {
       this.logger.error(`Failed to generate password: ${error.message}`);
       throw error;
     }
+  }
+
+  async registerUser(dto: RegisterUserDto): Promise<LoginResponseDto | FailureResponseDto> {
+    const existing = await this.userRepository.findByEmail(dto.officialEmail);
+    if (existing) return AUTH_RESPONSES.EMAIL_EXISTS;
+
+    const role = await this.roleRepository.findByRoleName('User');
+    const passwordHash = await bcrypt.hash(dto.password, 10);
+    const user = this.userRepository.create({
+      firstName: dto.firstName,
+      lastName: dto.lastName,
+      officialEmail: dto.officialEmail,
+      primaryPhone: dto.primaryPhone,
+      isActive: true,
+      password: passwordHash,
+      role,
+    } as any);
+    const saved = await this.userRepository.save(user);
+    return AUTH_RESPONSES.LOGIN_SUCCESS(this.extractUserDetails(saved), { token: '', expiresAt: new Date() } as any);
+  }
+
+  async registerVendor(dto: RegisterVendorDto): Promise<LoginResponseDto | FailureResponseDto> {
+    const existing = await this.userRepository.findByEmail(dto.officialEmail);
+    if (existing) return AUTH_RESPONSES.EMAIL_EXISTS;
+
+    const role = await this.roleRepository.findByRoleName('Vendor');
+    const passwordHash = await bcrypt.hash(dto.password, 10);
+    const user = this.userRepository.create({
+      firstName: dto.vendorName,
+      lastName: '',
+      officialEmail: dto.officialEmail,
+      primaryPhone: dto.phoneNumber,
+      isActive: true,
+      password: passwordHash,
+      role,
+    } as any);
+    const savedUser = await this.userRepository.save(user);
+
+    await this.vendorRepository.createVendor({
+      user: savedUser,
+      vendorName: dto.vendorName,
+      businessName: dto.businessName,
+      phoneNumber: dto.phoneNumber,
+      isVerified: false,
+      isActive: true,
+    });
+    return AUTH_RESPONSES.LOGIN_SUCCESS(this.extractUserDetails(savedUser), { token: '', expiresAt: new Date() } as any);
   }
 
   async validateUser(userId: number, accessToken: string): Promise<boolean> {
@@ -374,7 +535,7 @@ export class AuthenticationService {
   async logout(
     userId: number,
     token: string,
-  ): Promise<LogoutResponseDto | FailureResposneDto> {
+  ): Promise<LogoutResponseDto | FailureResponseDto> {
     this.logger.log(
       `Logout request for user ID: ${userId} with token: ${token}`,
     );

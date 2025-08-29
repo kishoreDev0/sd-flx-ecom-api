@@ -1,10 +1,11 @@
 import { HttpStatus } from '@nestjs/common';
 import {
   OrderResponseDto,
-  OrderResponseWrapper,
-  OrdersResponseWrapper,
 } from 'src/main/dto/responses/order-response.dto';
 import { GenericResponseDto } from 'src/main/dto/responses/generics/generic-response.dto';
+
+type OrderResponseWrapper = GenericResponseDto<OrderResponseDto>;
+type OrdersResponseWrapper = GenericResponseDto<OrderResponseDto[]>;
 
 export const ORDER_RESPONSES = {
   ORDER_NOT_FOUND: (): OrderResponseWrapper => ({

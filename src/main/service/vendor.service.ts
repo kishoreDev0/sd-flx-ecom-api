@@ -166,4 +166,24 @@ export class VendorService {
 
     return this.vendorRepository.updateVendor(vendor.id, filteredData);
   }
+
+  async updatePayoutSettings(id: number, data: { payoutMethod?: string; payoutAccount?: string; updatedBy: User }): Promise<Vendor> {
+    const vendor = await this.vendorRepository.findVendorById(id);
+    if (!vendor) throw new NotFoundException('Vendor not found');
+    return this.vendorRepository.updateVendor(id, {
+      payoutMethod: data.payoutMethod,
+      payoutAccount: data.payoutAccount,
+      updatedBy: data.updatedBy,
+    } as any);
+  }
+
+  async updateKycStatus(id: number, data: { kycStatus: string; kycDocuments?: any[]; updatedBy: User }): Promise<Vendor> {
+    const vendor = await this.vendorRepository.findVendorById(id);
+    if (!vendor) throw new NotFoundException('Vendor not found');
+    return this.vendorRepository.updateVendor(id, {
+      kycStatus: data.kycStatus,
+      kycDocuments: data.kycDocuments,
+      updatedBy: data.updatedBy,
+    } as any);
+  }
 }

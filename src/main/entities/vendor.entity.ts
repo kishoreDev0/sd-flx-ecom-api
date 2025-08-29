@@ -79,6 +79,37 @@ export class Vendor {
   commissionRate: number;
 
   @Column({
+    name: 'payout_method',
+    type: 'varchar',
+    length: 50,
+    nullable: true,
+  })
+  payoutMethod: string;
+
+  @Column({
+    name: 'payout_account',
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+  })
+  payoutAccount: string;
+
+  @Column({
+    name: 'kyc_status',
+    type: 'varchar',
+    length: 50,
+    default: 'pending',
+  })
+  kycStatus: string;
+
+  @Column({
+    name: 'kyc_documents',
+    type: 'json',
+    nullable: true,
+  })
+  kycDocuments: any;
+
+  @Column({
     name: 'is_verified',
     type: 'boolean',
     default: false,

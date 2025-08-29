@@ -34,8 +34,8 @@ export class ContactService {
             this.logger.error(`User with ID ${dto.createdBy} does not exist`);
             return USER_RESPONSES.USERS_NOT_FOUND();
         }
-        const existingOrderResponse = await this.orderService.getOrderById(Number(dto.orderId));
-        if(!existingOrderResponse || !existingOrderResponse.data){
+        const existingOrderResponse = await this.orderService.findOne(Number(dto.orderId));
+        if(!existingOrderResponse){
             this.logger.error(`Order with ID ${dto.orderId} does not exist`);
             return CONTACT_RESPONSES.CONTACT_NOT_FOUND();
         }
@@ -45,7 +45,7 @@ export class ContactService {
             email: dto.email,
             companyName: dto.companyName,
             queryOn: dto.queryOn,
-            orderId: existingOrderResponse.data, 
+            orderId: existingOrderResponse, 
             description: dto.description,
             isActive: dto.isActive,
             createdBy: existingUser,

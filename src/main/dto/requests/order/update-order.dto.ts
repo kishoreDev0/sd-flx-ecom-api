@@ -1,44 +1,110 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsArray, IsString, IsOptional, IsEnum } from 'class-validator';
-import { OrderStatus } from 'src/main/entities/order.entity';
+import { IsOptional, IsNumber, IsString, IsEnum, IsBoolean, IsDateString } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { OrderStatus, PaymentStatus } from '../../../entities/order.entity';
 
-export class UpdateOrderDTO {
-  @ApiProperty({ required: false })
-  @IsArray()
-  @IsOptional()
-  productIds?: number[];
-
-  @ApiProperty({ required: false })
-  @IsNumber()
-  @IsOptional()
-  totalAmount?: number;
-
-  @ApiProperty({ enum: OrderStatus, required: false })
+export class UpdateOrderDto {
+  @ApiPropertyOptional({ enum: OrderStatus })
   @IsEnum(OrderStatus)
   @IsOptional()
   status?: OrderStatus;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ enum: PaymentStatus })
+  @IsEnum(PaymentStatus)
+  @IsOptional()
+  paymentStatus?: PaymentStatus;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  paymentMethod?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  paymentTransactionId?: string;
+
+  @ApiPropertyOptional()
   @IsString()
   @IsOptional()
   shippingAddress?: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  billingAddress?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  customerPhone?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  customerEmail?: string;
+
+  @ApiPropertyOptional()
   @IsString()
   @IsOptional()
   notes?: string;
 
-  @ApiProperty()
-  @IsNumber()
-  updatedBy: number;
-}
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  vendorNotes?: string;
 
-export class UpdateOrderStatusDTO {
-  @ApiProperty({ enum: OrderStatus })
-  @IsEnum(OrderStatus)
-  status: OrderStatus;
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  adminNotes?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsBoolean()
+  @IsOptional()
+  isReturnRequested?: boolean;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  returnReason?: string;
+
+  @ApiPropertyOptional()
+  @IsBoolean()
+  @IsOptional()
+  isEscalated?: boolean;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  escalationReason?: string;
+
+  @ApiPropertyOptional()
+  @IsDateString()
+  @IsOptional()
+  confirmedAt?: string;
+
+  @ApiPropertyOptional()
+  @IsDateString()
+  @IsOptional()
+  shippedAt?: string;
+
+  @ApiPropertyOptional()
+  @IsDateString()
+  @IsOptional()
+  deliveredAt?: string;
+
+  @ApiPropertyOptional()
+  @IsDateString()
+  @IsOptional()
+  cancelledAt?: string;
+
+  @ApiPropertyOptional()
+  @IsDateString()
+  @IsOptional()
+  refundedAt?: string;
+
+  @ApiPropertyOptional()
   @IsNumber()
-  updatedBy: number;
+  @IsOptional()
+  updatedById?: number;
 }

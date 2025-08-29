@@ -46,12 +46,17 @@ export async function bootstrap(): Promise<void> {
   setupSwagger(app, globalPrefix);
 
   // Configure CORS with security options
+  // app.enableCors({
+  //   origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:8574'],
+  //   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  //   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  //   credentials: true,
+  // });
   app.enableCors({
-    origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-    credentials: true,
-  });
+  origin: '*', // Allow all origins
+  methods: '*', // Allow all methods
+  allowedHeaders: '*', // Allow all headers
+});
 
   await app.listen(process.env.PORT || 3008);
   console.log(

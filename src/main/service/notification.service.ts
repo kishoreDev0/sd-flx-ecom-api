@@ -12,6 +12,33 @@ export class NotificationService {
     private readonly logger: LoggerService,
   ) {}
 
+  async create(data: {
+    userId: number;
+    title: string;
+    message: string;
+    type?: NotificationType;
+    priority?: NotificationPriority;
+    metadata?: any;
+    expiresAt?: Date;
+    isRead?: boolean;
+    createdBy?: number;
+  }): Promise<Notification> {
+    try {
+      const notification = await this.notificationRepository.createNotification({
+        ...data,
+        type: data.type || NotificationType.GENERAL,
+        priority: data.priority || NotificationPriority.MEDIUM,
+        isRead: data.isRead || false,
+      });
+
+      this.logger.info('Notification created', { notificationId: notification.id, userId: data.userId });
+      return notification;
+    } catch (error) {
+      this.logger.error('Error creating notification', error);
+      throw error;
+    }
+  }
+
   async createNotification(data: {
     userId: number;
     type: NotificationType;

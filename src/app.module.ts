@@ -1,12 +1,10 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { GoogleModule } from './main/google-sign-in/google.module';
-import { GoogleStrategy } from './main/google-sign-in/google.strategy';
+import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from './main/modules/database.module';
 import { RoleModule } from './main/modules/role.module';
 import { LoggerModule } from './main/modules/logger.module';
 import { UserSessionModule } from './main/modules/user-session.module';
+import { GoogleModule } from './main/google-sign-in/google.module';
 import { UserModule } from './main/modules/user.module';
 import { ProductModule } from './main/modules/product.module';
 import { CartModule } from './main/modules/cart.module';
@@ -22,10 +20,20 @@ import { StaticModule } from './main/modules/static.module';
 import { FaqModule } from './main/modules/faq.module';
 import { OrderTrackingModule } from './main/modules/order-tracking.module';
 import { NotificationModule } from './main/modules/notification.module';
+import { InventoryModule } from './main/modules/inventory.module';
+import { PaymentModule } from './main/modules/payment.module';
+import { ShippingModule } from './main/modules/shipping.module';
 // import { MiddlewareConfigModule } from './main/middleware/middleware.config';
+
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { GoogleStrategy } from './main/google-sign-in/google.strategy';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     DatabaseModule,
     RoleModule,
     LoggerModule,
@@ -46,6 +54,9 @@ import { NotificationModule } from './main/modules/notification.module';
     FaqModule,
     OrderTrackingModule,
     NotificationModule,
+    InventoryModule,
+    PaymentModule,
+    ShippingModule,
     // MiddlewareConfigModule
   ],
   controllers: [AppController],

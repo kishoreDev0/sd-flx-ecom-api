@@ -1,4 +1,5 @@
 import { forwardRef, Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { AuthenticationService } from '../service/auth/authentication.service';
 import { AuthenticationController } from '../controller/authentication.controller';
 import { User } from 'src/main/entities/user.entity';
@@ -19,10 +20,14 @@ import { GoogleService } from '../google-sign-in/google.service';
 import { GoogleModule } from '../google-sign-in/google.module';
 import { WishlistModule } from './wishlist.module';
 import { CartModule } from './cart.module';
+import { RolesGuard } from '../commons/guards/roles.guard';
+import { AuthGuard } from '../commons/guards/auth.guard';
+import { Vendor } from '../entities/vendor.entity';
+import { VendorRepository } from '../repository/vendor.repository';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, UserSession, Role]),
+    TypeOrmModule.forFeature([User, UserSession, Role, Vendor]),
     LoggerModule,
     MailModule,
     forwardRef(() => RoleModule),
@@ -41,7 +46,11 @@ import { CartModule } from './cart.module';
     UserSessionService,
     GoogleStrategy,
     GoogleService,
+    VendorRepository,
+    RolesGuard,
+    { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_GUARD, useClass: AuthGuard },
   ],
-  exports: [AuthenticationService, InviteService],
+  exports: [AuthenticationService, InviteService, CommonUtilService, RolesGuard],
 })
 export class AuthenticationModule {}

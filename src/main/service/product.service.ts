@@ -41,6 +41,9 @@ export class ProductService {
       let vendor = null;
       if (dto.vendorId) {
         vendor = await this.vendorRepo.findVendorById(dto.vendorId);
+        if (!vendor?.isVerified) {
+          throw new NotFoundException('Vendor is not verified');
+        }
       }
 
       const product = this.repo.create({
@@ -57,6 +60,7 @@ export class ProductService {
         vendor,
         createdBy: creator,
         updatedBy: creator,
+        isApproved: false,
       });
 
       const savedProduct = await this.repo.save(product);

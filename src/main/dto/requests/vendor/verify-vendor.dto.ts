@@ -17,4 +17,12 @@ export class VerifyVendorDto {
   @IsOptional()
   @IsBoolean()
   isVerified?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'KYC status',
+    example: 'approved',
+  })
+  @IsOptional()
+  @IsString()
+  kycStatus?: string;
 }

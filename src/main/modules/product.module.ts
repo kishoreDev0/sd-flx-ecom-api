@@ -13,6 +13,9 @@ import { AuthenticationModule } from './authentication.module';
 import { BrandModule } from './brand.module';
 import { VendorModule } from './vendor.module';
 import { BrandCategoryModule } from './brand-category.module';
+import { S3Service } from '../service/s3.service';
+import { RolesGuard } from '../commons/guards/roles.guard';
+import { CommonUtilService } from '../utils/common.util';
 
 @Module({
   imports: [
@@ -26,7 +29,7 @@ import { BrandCategoryModule } from './brand-category.module';
     forwardRef(() => VendorModule),
     forwardRef(() => BrandCategoryModule),
   ],
-  providers: [ProductService, ProductRepository],
+  providers: [ProductService, ProductRepository, S3Service, RolesGuard, CommonUtilService],
   controllers: [ProductController],
   exports: [ProductService,ProductRepository],
 })

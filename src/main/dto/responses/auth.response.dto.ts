@@ -43,7 +43,7 @@ export class LogoutDto {
 }
 
 export type LoginResponseDto = GenericResponseDto<LoginDto | null>;
-export type FailureResposneDto = GenericResponseDto<LoginDto | null>;
+export type FailureResponseDto = GenericResponseDto<LoginDto | null>;
 
 export type ForgotPasswordResponseDto =
   GenericResponseDto<ForgotPasswordDto | null>;

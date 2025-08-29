@@ -205,7 +205,7 @@ export class OrderTrackingService {
     createdBy: number;
   }): Promise<OrderTracking> {
     try {
-      const trackingEntry = await this.updateOrderStatus(orderId, OrderStatus.DELIVERED, {
+      const trackingEntry = await this.updateOrderStatus(orderId, TrackingOrderStatus.DELIVERED, {
         statusDescription: 'Order delivered successfully',
         actualDelivery: data.actualDelivery || new Date(),
         createdBy: data.createdBy,
@@ -226,7 +226,7 @@ export class OrderTrackingService {
 
   async cancelOrder(orderId: number, reason: string, createdBy: number): Promise<OrderTracking> {
     try {
-      const trackingEntry = await this.updateOrderStatus(orderId, OrderStatus.CANCELLED, {
+      const trackingEntry = await this.updateOrderStatus(orderId, TrackingOrderStatus.CANCELLED, {
         statusDescription: `Order cancelled: ${reason}`,
         createdBy,
       });
@@ -251,7 +251,7 @@ export class OrderTrackingService {
     }
   }
 
-  async getOrdersByStatus(status: OrderStatus): Promise<OrderTracking[]> {
+  async getOrdersByStatus(status: TrackingOrderStatus): Promise<OrderTracking[]> {
     try {
       return await this.orderTrackingRepository.getOrdersByStatus(status);
     } catch (error) {

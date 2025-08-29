@@ -1,9 +1,9 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, ParseIntPipe, HttpCode, HttpStatus, Patch } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body, ParseIntPipe, HttpCode, HttpStatus, Patch, Query } from '@nestjs/common';
 import { CategoryService } from '../service/category.service'; 
 import { CreateCategoryDTO } from '../dto/requests/category/create-category.dto';
 import { UpdateCategoryDTO } from '../dto/requests/category/update-category.dto';
 import { CATEGORY_RESPONSES } from '../commons/constants/response-constants/category.constant'; 
-import { ApiTags, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { CategoryResponseDto } from '../dto/responses/category-response.dto';
 
 @ApiTags('categories')
@@ -19,9 +19,20 @@ export class CategoryController {
   }
 
   @Get()
+  @ApiQuery({ name: 'type', required: false, enum: ['all', 'root', 'subcategories'], description: 'Filter categories by type' })
+  @ApiQuery({ name: 'parentId', required: false, type: Number, description: 'Parent ID for subcategories' })
   @ApiResponse({ status: 200, description: 'Categories fetched', type: [CategoryResponseDto] })
-  async findAll() {
-    const categories = await this.categoryService.findAll();
+  async findAll(@Query('type') type?: string, @Query('parentId') parentId?: number) {
+    let categories: CategoryResponseDto[];
+    
+    if (type === 'root') {
+      categories = await this.categoryService.findRootCategories();
+    } else if (type === 'subcategories' && parentId) {
+      categories = await this.categoryService.findSubcategories(parentId);
+    } else {
+      categories = await this.categoryService.findAll();
+    }
+    
     return CATEGORY_RESPONSES.CATEGORIES_FETCHED(categories);
   }
 
@@ -34,6 +45,18 @@ export class CategoryController {
       statusCode: HttpStatus.OK,
       message: 'Category fetched successfully',
       data: category,
+    };
+  }
+
+  @Get(':id/subcategories')
+  @ApiResponse({ status: 200, description: 'Subcategories fetched', type: [CategoryResponseDto] })
+  async findSubcategories(@Param('id', ParseIntPipe) id: number) {
+    const subcategories = await this.categoryService.findSubcategories(id);
+    return {
+      success: true,
+      statusCode: HttpStatus.OK,
+      message: 'Subcategories fetched successfully',
+      data: subcategories,
     };
   }
 

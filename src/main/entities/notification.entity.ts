@@ -10,6 +10,7 @@ import {
 import { User } from './user.entity';
 
 export enum NotificationType {
+  GENERAL = 'general',
   ORDER_STATUS = 'order_status',
   ORDER_CONFIRMATION = 'order_confirmation',
   ORDER_SHIPPED = 'order_shipped',
@@ -21,6 +22,8 @@ export enum NotificationType {
   SECURITY_ALERT = 'security_alert',
   PROMOTIONAL = 'promotional',
   SYSTEM_MAINTENANCE = 'system_maintenance',
+  LOW_STOCK = 'low_stock',
+  INVENTORY_UPDATE = 'inventory_update',
 }
 
 export enum NotificationPriority {

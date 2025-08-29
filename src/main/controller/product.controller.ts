@@ -6,6 +6,8 @@ import {
   Delete,
   Param,
   Body,
+  UploadedFiles,
+  UseInterceptors,
   ParseIntPipe,
   UseGuards,
   Query,
@@ -23,6 +25,12 @@ import { LoggerService } from '../service/logger.service';
 import { ApiHeadersForAuth } from '../commons/guards/auth-headers.decorator';
 import { AuthGuard } from '../commons/guards/auth.guard';
 import { Public } from '../commons/decorators/public.decorator';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import * as multer from 'multer';
+import { S3Service } from '../service/s3.service';
+import { RequireRoles } from '../commons/guards/roles.decorator';
+import { RolesGuard } from '../commons/guards/roles.guard';
+import { Roles } from '../commons/enumerations/role.enum';
 
 @ApiTags('products')
 @Controller('v1/products')
@@ -32,6 +40,7 @@ export class ProductController {
   constructor(
     private readonly productService: ProductService,
     private readonly loggerService: LoggerService,
+    private readonly s3Service: S3Service,
   ) {}
 
 
@@ -46,6 +55,24 @@ export class ProductController {
       this.loggerService.error(error);
       throw error;
     }
+  }
+
+  @Post('upload-images')
+  @Public()
+  @UseInterceptors(FilesInterceptor('files', 10, { storage: multer.memoryStorage() }))
+  async uploadImages(@UploadedFiles() files: Express.Multer.File[]) {
+    const urls: string[] = [];
+    for (const file of files || []) {
+      const { url } = await this.s3Service.uploadBuffer({
+        buffer: file.buffer,
+        contentType: file.mimetype,
+        originalName: file.originalname,
+        keyPrefix: 'products',
+        acl: 'public-read',
+      });
+      urls.push(url);
+    }
+    return { success: true, data: { urls } };
   }
 
   @Get()
@@ -73,6 +100,31 @@ export class ProductController {
       };
       
       return await this.productService.getProductsWithFilters(filters);
+    } catch (error) {
+      this.loggerService.error(error);
+      throw error;
+    }
+  }
+
+  @Patch(':id/approve')
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequireRoles(Roles.ADMIN)
+  @ApiResponse({ status: 200 })
+  async approve(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('approvedBy') approvedBy: number,
+  ) {
+    try {
+      const approver = await this.productService['userRepo'].findUserById(approvedBy);
+      const product = await this.productService['repo'].findById(id);
+      if (!product) {
+        throw new Error('Product not found');
+      }
+      product.isApproved = true;
+      product.approvedBy = approver as any;
+      product.approvedAt = new Date();
+      await this.productService['repo'].save(product as any);
+      return { success: true, message: 'Product approved' };
     } catch (error) {
       this.loggerService.error(error);
       throw error;
