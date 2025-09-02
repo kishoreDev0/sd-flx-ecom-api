@@ -28,14 +28,23 @@ function sortSwaggerTags(document: OpenAPIObject): void {
     'Product',
     'Carts',
     'categories',
+    'subcategories',
     'products',
     'Wishlists',
     'Brands',
     'Brand Categories',
     'Vendors',
+    'orders',
     'Order Tracking',
+    'contacts',
+    'static-pages',
+    'Faqs',
+    'shipping',
+    'payments',
+    'inventory',
     'Notifications',
     'Product Ratings',
+    'Attributes',
     ];
   const taggedPaths: Record<string, Record<string, any>> = {};
 

@@ -9,44 +9,37 @@ export class CreateBrandDto {
   @IsString()
   brandName: string;
 
-  @ApiPropertyOptional({
-    description: 'Brand description',
-    example: 'Just Do It - Leading sports brand',
-  })
-  @IsOptional()
+  @ApiPropertyOptional()
   @IsString()
+  @IsOptional()
   brandDescription?: string;
 
-  @ApiPropertyOptional({
-    description: 'Brand logo URL',
-    example: 'https://example.com/nike-logo.png',
-  })
-  @IsOptional()
+  @ApiPropertyOptional()
   @IsUrl()
+  @IsOptional()
   brandLogo?: string;
 
-  @ApiPropertyOptional({
-    description: 'Brand website URL',
-    example: 'https://www.nike.com',
-  })
-  @IsOptional()
+  @ApiPropertyOptional()
   @IsUrl()
+  @IsOptional()
   websiteUrl?: string;
 
-  @ApiPropertyOptional({
-    description: 'Whether the brand is active',
-    example: true,
-    default: true,
-  })
-  @IsOptional()
+  @ApiPropertyOptional()
   @IsBoolean()
+  @IsOptional()
   isActive?: boolean;
 
-  @ApiPropertyOptional({
-    description: 'Vendor ID to associate with brand',
-    example: 1,
-  })
-  @IsOptional()
+  @ApiPropertyOptional()
   @IsNumber()
+  @IsOptional()
   vendorId?: number;
+
+  @ApiProperty()
+  @IsNumber()
+  categoryId: number;
+
+  @ApiPropertyOptional()
+  @IsNumber()
+  @IsOptional()
+  createdBy?: number; // Will be set automatically from authenticated user
 }

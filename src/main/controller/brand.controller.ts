@@ -122,6 +122,24 @@ export class BrandController {
     }
   }
 
+  @Get('vendor/:vendorId')
+  @Public()
+  @ApiResponse({ status: 200, type: BrandsResponseWrapper })
+  async findByVendorId(@Param('vendorId', ParseIntPipe) vendorId: number) {
+    try {
+      const brands = await this.brandService.findByVendorId(vendorId);
+      
+      return {
+        success: true,
+        message: 'Vendor brands retrieved successfully',
+        data: brands,
+      };
+    } catch (error) {
+      this.loggerService.error('Error retrieving vendor brands', error);
+      throw error;
+    }
+  }
+
   @Get('search/:name')
   @Public()
   @ApiResponse({ status: 200, type: BrandResponseWrapper })

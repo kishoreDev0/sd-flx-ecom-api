@@ -28,8 +28,7 @@ export class S3Service {
     keyPrefix?: string;
     originalName?: string;
     acl?: 'private' | 'public-read';
-  }): Promise<{ key: string; url: string }>
-  {
+  }): Promise<{ key: string; url: string }> {
     const ext = params.originalName?.split('.').pop() || params.contentType?.split('/').pop() || 'bin';
     const key = `${params.keyPrefix || 'products'}/${randomUUID()}.${ext}`;
 

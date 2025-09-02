@@ -27,15 +27,30 @@ export const PRODUCT_RESPONSES = {
     success: true,
     statusCode: 200,
     message: `Product with ID ${id} deleted successfully`,
+    data: { id },
+  }),
+  PRODUCT_APPROVED: (data: any) => ({
+    success: true,
+    statusCode: 200,
+    message: 'Product approved successfully',
+    data,
+  }),
+  PRODUCT_REJECTED: (id: number) => ({
+    success: true,
+    statusCode: 200,
+    message: `Product with ID ${id} rejected successfully`,
+    data: { id },
   }),
   PRODUCT_NOT_FOUND: () => ({
     success: false,
     statusCode: 404,
     message: 'Product not found',
+    data: null,
   }),
   PRODUCTS_NOT_FOUND: () => ({
     success: false,
     statusCode: 404,
     message: 'No products found',
+    data: [],
   }),
 };

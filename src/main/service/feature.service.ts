@@ -53,6 +53,13 @@ export class FeatureService {
     return FEATURE_RESPONSES.FEATURES_FETCHED(features);
   }
 
+  async getById(id: number): Promise<FeatureResponseWrapper> {
+    const feature = await this.repo.findById(id);
+    if (!feature) throw new NotFoundException(FEATURE_RESPONSES.FEATURE_NOT_FOUND());
+
+    return FEATURE_RESPONSES.FEATURE_FETCHED(feature);
+  }
+
   async delete(id: number): Promise<FeatureResponseWrapper> {
     const feature = await this.repo.findById(id);
     if (!feature) throw new NotFoundException(FEATURE_RESPONSES.FEATURE_NOT_FOUND());

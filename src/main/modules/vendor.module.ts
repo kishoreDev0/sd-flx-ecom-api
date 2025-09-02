@@ -21,7 +21,6 @@ import { CommonUtilService } from '../utils/common.util';
     forwardRef(() => UserSessionModule),
     forwardRef(() => AuthenticationModule),
     forwardRef(() => BrandModule),
-    forwardRef(() => ProductModule),
     UserModule,
   ],
   controllers: [VendorController],

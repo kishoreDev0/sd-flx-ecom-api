@@ -37,6 +37,68 @@ export class BrandDto {
   })
   isActive: boolean;
 
+  @ApiPropertyOptional({
+    description: 'Vendor associated with the brand',
+    example: {
+      id: 1,
+      vendorName: 'Nike Inc',
+      businessName: 'Nike Inc',
+      officialEmail: 'contact@nike.com'
+    }
+  })
+  vendor?: {
+    id: number;
+    vendorName: string;
+    businessName: string;
+    officialEmail: string;
+  };
+
+  @ApiPropertyOptional({
+    description: 'Primary category associated with the brand',
+    example: {
+      id: 1,
+      categoryName: 'Sports & Fitness',
+      description: 'Sports equipment and fitness gear'
+    }
+  })
+  primaryCategory?: {
+    id: number;
+    categoryName: string;
+    description?: string;
+  };
+
+  @ApiPropertyOptional({
+    description: 'User who created the brand',
+    example: {
+      id: 1,
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john@example.com'
+    }
+  })
+  createdBy?: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+
+  @ApiPropertyOptional({
+    description: 'User who last updated the brand',
+    example: {
+      id: 1,
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john@example.com'
+    }
+  })
+  updatedBy?: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+
   @ApiProperty({
     description: 'Creation date',
     example: '2024-01-01T00:00:00.000Z',

@@ -28,16 +28,12 @@ export class CreateCategoryDTO {
   @IsOptional()
   seoKeywords?: string[];
 
-  @ApiPropertyOptional()
-  @IsNumber()
-  @IsOptional()
-  parentId?: number;
-
   @ApiProperty()
   @IsBoolean()
   isActive: boolean;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsNumber()
-  createdBy: number;
+  @IsOptional()
+  createdBy?: number; // Will be set automatically from authenticated user
 }

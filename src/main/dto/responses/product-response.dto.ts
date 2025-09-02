@@ -1,51 +1,195 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { GenericResponseDto } from './generics/generic-response.dto';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class ProductResponseDto {
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Product ID',
+    example: 1,
+  })
   id: number;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Product name',
+    example: 'iPhone 15 Pro',
+  })
   name: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Product description',
+    example: 'Latest iPhone with advanced features and titanium design',
+  })
   description: string;
 
-  @ApiProperty({ type: [String] })
+  @ApiProperty({
+    description: 'Product images',
+    type: [String],
+    example: ['https://example.com/image1.jpg', 'https://example.com/image2.jpg'],
+  })
   imagesPath: string[];
 
-  @ApiProperty()
-  category: number;
+  @ApiProperty({
+    description: 'Product category information',
+    example: {
+      id: 1,
+      categoryName: 'Electronics',
+      description: 'Electronic devices and gadgets'
+    }
+  })
+  category: {
+    id: number;
+    categoryName: string;
+    description?: string;
+  };
 
-  @ApiProperty({ required: false })
-  brand?: number;
+  @ApiPropertyOptional({
+    description: 'Product brand information',
+    example: {
+      id: 1,
+      brandName: 'Apple',
+      description: 'Premium technology brand'
+    }
+  })
+  brand?: {
+    id: number;
+    brandName: string;
+    description?: string;
+  };
 
-  @ApiProperty({ type: [String] })
-  features: string[];
+  @ApiPropertyOptional({
+    description: 'Product vendor information',
+    example: {
+      id: 1,
+      vendorName: 'Apple Store',
+      businessName: 'Apple Inc.',
+      isVerified: true
+    }
+  })
+  vendor?: {
+    id: number;
+    vendorName: string;
+    businessName: string;
+    isVerified: boolean;
+  };
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Product features with details',
+    type: [Object],
+    example: [
+      { id: 1, name: 'Water Resistant' },
+      { id: 2, name: 'Bluetooth Enabled' }
+    ],
+  })
+  features: Array<{
+    id: number;
+    name: string;
+  }>;
+
+  @ApiProperty({
+    description: 'Product price in base currency',
+    example: 999.99,
+  })
   price: number;
 
-  @ApiProperty()
-  totalNoOfStock:number
+  @ApiProperty({
+    description: 'Total stock quantity available',
+    example: 100,
+  })
+  totalNoOfStock: number;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Current available stock quantity',
+    example: 50,
+  })
   noOfStock: number;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Whether the product is currently in stock',
+    example: true,
+  })
   inStock: boolean;
 
-  @ApiProperty()
-  createdBy: number;
+  @ApiProperty({
+    description: 'Whether the product has been approved by admin',
+    example: false,
+  })
+  isApproved: boolean;
 
-  @ApiProperty()
-  updatedBy: number;
+  @ApiPropertyOptional({
+    description: 'User who approved the product',
+    example: {
+      id: 1,
+      firstName: 'Admin',
+      lastName: 'User',
+      email: 'admin@example.com'
+    }
+  })
+  approvedBy?: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
 
-  @ApiProperty()
+  @ApiPropertyOptional({
+    description: 'Date when the product was approved',
+    example: '2024-01-01T00:00:00.000Z',
+  })
+  approvedAt?: Date;
+
+  @ApiProperty({
+    description: 'User who created the product',
+    example: {
+      id: 1,
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john@example.com'
+    }
+  })
+  createdBy: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+
+  @ApiPropertyOptional({
+    description: 'User who last updated the product',
+    example: {
+      id: 1,
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john@example.com'
+    }
+  })
+  updatedBy?: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+
+  @ApiProperty({
+    description: 'Product creation date',
+    example: '2024-01-01T00:00:00.000Z',
+  })
   createdAt: Date;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Product last update date',
+    example: '2024-01-01T00:00:00.000Z',
+  })
   updatedAt: Date;
 }
-export type ProductResponseWrapper = GenericResponseDto<ProductResponseDto>;
-export type ProductsResponseWrapper = GenericResponseDto<ProductResponseDto[]>;
+
+export type ProductResponseWrapper = {
+  success: boolean;
+  message: string;
+  data: ProductResponseDto;
+  statusCode?: number;
+};
+
+export type ProductsResponseWrapper = {
+  success: boolean;
+  message: string;
+  data: ProductResponseDto[];
+  statusCode?: number;
+};

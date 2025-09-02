@@ -27,60 +27,145 @@ export class ProductDto {
   imagesPath: string[];
 
   @ApiProperty({
-    description: 'Product category',
+    description: 'Product category information',
+    example: {
+      id: 1,
+      categoryName: 'Electronics',
+      description: 'Electronic devices and gadgets'
+    }
   })
-  category: any;
+  category: {
+    id: number;
+    categoryName: string;
+    description?: string;
+  };
 
   @ApiPropertyOptional({
-    description: 'Product brand',
+    description: 'Product brand information',
+    example: {
+      id: 1,
+      brandName: 'Apple',
+      description: 'Premium technology brand'
+    }
   })
-  brand?: any;
+  brand?: {
+    id: number;
+    brandName: string;
+    description?: string;
+  };
 
   @ApiPropertyOptional({
-    description: 'Product vendor',
+    description: 'Product vendor information',
+    example: {
+      id: 1,
+      vendorName: 'Apple Store',
+      businessName: 'Apple Inc.',
+      isVerified: true
+    }
   })
-  vendor?: any;
+  vendor?: {
+    id: number;
+    vendorName: string;
+    businessName: string;
+    isVerified: boolean;
+  };
 
   @ApiProperty({
-    description: 'Product features',
-    type: [Number],
-    example: [1, 2, 3],
+    description: 'Product features with details',
+    type: [Object],
+    example: [
+      { id: 1, name: 'Water Resistant' },
+      { id: 2, name: 'Bluetooth Enabled' }
+    ],
   })
-  features: number[];
+  features: Array<{
+    id: number;
+    name: string;
+  }>;
 
   @ApiProperty({
-    description: 'Product price',
+    description: 'Product price in base currency',
     example: 999.99,
   })
   price: number;
 
   @ApiProperty({
-    description: 'Total stock available',
+    description: 'Total stock quantity available',
     example: 100,
   })
   totalNoOfStock: number;
 
   @ApiProperty({
-    description: 'Current stock available',
+    description: 'Current available stock quantity',
     example: 50,
   })
   noOfStock: number;
 
   @ApiProperty({
-    description: 'Whether product is in stock',
+    description: 'Whether the product is currently in stock',
     example: true,
   })
   inStock: boolean;
 
   @ApiProperty({
-    description: 'Created by user',
+    description: 'Whether the product has been approved by admin',
+    example: false,
   })
-  createdBy: any;
+  isApproved: boolean;
+
+  @ApiPropertyOptional({
+    description: 'User who approved the product',
+    example: {
+      id: 1,
+      firstName: 'Admin',
+      lastName: 'User',
+      email: 'admin@example.com'
+    }
+  })
+  approvedBy?: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+
+  @ApiPropertyOptional({
+    description: 'Date when the product was approved',
+    example: '2024-01-01T00:00:00.000Z',
+  })
+  approvedAt?: Date;
 
   @ApiProperty({
-    description: 'Updated by user',
+    description: 'User who created the product',
+    example: {
+      id: 1,
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john@example.com'
+    }
   })
-  updatedBy: any;
+  createdBy: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+
+  @ApiPropertyOptional({
+    description: 'User who last updated the product',
+    example: {
+      id: 1,
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john@example.com'
+    }
+  })
+  updatedBy?: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
 
   @ApiProperty({
     description: 'Creation date',

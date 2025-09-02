@@ -6,18 +6,20 @@ import {
   Delete,
   Param,
   Body,
-  UploadedFiles,
-  UseInterceptors,
   ParseIntPipe,
   UseGuards,
   Query,
+  Req,
 } from '@nestjs/common';
-import { ApiTags, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiResponse, ApiQuery, ApiOperation } from '@nestjs/swagger';
 
 import { ProductService } from '../service/product.service';
 import { CreateProductDto } from '../dto/requests/product/create-product.dto';
 import { UpdateProductDto } from '../dto/requests/product/update-product.dto';
 import { ProductByBrandsDto } from '../dto/requests/product/product-by-brands.dto';
+import { ApproveProductDto, RejectProductDto } from '../dto/requests/product/approve-product.dto';
+import { ProductAttributeDto } from '../dto/requests/product/product-attribute.dto';
+import { CreateProductVariantDto } from '../dto/requests/product/create-product-variant.dto';
 import { ProductResponseDto } from '../dto/responses/product-response.dto';
 import { ProductsWithPaginationResponseWrapper } from '../dto/responses/product-with-pagination-response.dto';
 import { PRODUCT_RESPONSES } from '../commons/constants/response-constants/product.constant';
@@ -25,9 +27,6 @@ import { LoggerService } from '../service/logger.service';
 import { ApiHeadersForAuth } from '../commons/guards/auth-headers.decorator';
 import { AuthGuard } from '../commons/guards/auth.guard';
 import { Public } from '../commons/decorators/public.decorator';
-import { FilesInterceptor } from '@nestjs/platform-express';
-import * as multer from 'multer';
-import { S3Service } from '../service/s3.service';
 import { RequireRoles } from '../commons/guards/roles.decorator';
 import { RolesGuard } from '../commons/guards/roles.guard';
 import { Roles } from '../commons/enumerations/role.enum';
@@ -40,39 +39,30 @@ export class ProductController {
   constructor(
     private readonly productService: ProductService,
     private readonly loggerService: LoggerService,
-    private readonly s3Service: S3Service,
   ) {}
 
 
   @Post()
-  @Public()
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequireRoles(Roles.VENDOR)
   @ApiResponse({ status: 201, type: ProductResponseDto })
-  async create(@Body() dto: CreateProductDto) {
+  async create(@Body() dto: CreateProductDto, @Req() req: any) {
     try {
+      // Extract user ID from request headers
+      const userId = req.headers['user-id'];
+      if (!userId) {
+        throw new Error('User ID not found in request headers');
+      }
+      
+      // Set the createdBy field from the authenticated user
+      dto.createdBy = parseInt(userId);
+      
       const result = await this.productService.create(dto);
-      return PRODUCT_RESPONSES.PRODUCT_CREATED(result);
+      return result;
     } catch (error) {
       this.loggerService.error(error);
       throw error;
     }
-  }
-
-  @Post('upload-images')
-  @Public()
-  @UseInterceptors(FilesInterceptor('files', 10, { storage: multer.memoryStorage() }))
-  async uploadImages(@UploadedFiles() files: Express.Multer.File[]) {
-    const urls: string[] = [];
-    for (const file of files || []) {
-      const { url } = await this.s3Service.uploadBuffer({
-        buffer: file.buffer,
-        contentType: file.mimetype,
-        originalName: file.originalname,
-        keyPrefix: 'products',
-        acl: 'public-read',
-      });
-      urls.push(url);
-    }
-    return { success: true, data: { urls } };
   }
 
   @Get()
@@ -109,22 +99,100 @@ export class ProductController {
   @Patch(':id/approve')
   @UseGuards(AuthGuard, RolesGuard)
   @RequireRoles(Roles.ADMIN)
-  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 200, type: ProductResponseDto })
   async approve(
     @Param('id', ParseIntPipe) id: number,
-    @Body('approvedBy') approvedBy: number,
+    @Body() approveDto: ApproveProductDto,
   ) {
     try {
-      const approver = await this.productService['userRepo'].findUserById(approvedBy);
-      const product = await this.productService['repo'].findById(id);
-      if (!product) {
-        throw new Error('Product not found');
-      }
-      product.isApproved = true;
-      product.approvedBy = approver as any;
-      product.approvedAt = new Date();
-      await this.productService['repo'].save(product as any);
-      return { success: true, message: 'Product approved' };
+      return await this.productService.approveProduct(id, approveDto.approvedBy);
+    } catch (error) {
+      this.loggerService.error(error);
+      throw error;
+    }
+  }
+
+  @Patch(':id/reject')
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequireRoles(Roles.ADMIN)
+  @ApiResponse({ status: 200, type: ProductResponseDto })
+  async reject(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() rejectDto: RejectProductDto,
+  ) {
+    try {
+      return await this.productService.rejectProduct(id, rejectDto.rejectedBy, rejectDto.rejectionReason);
+    } catch (error) {
+      this.loggerService.error(error);
+      throw error;
+    }
+  }
+
+  @Get('pending-approval')
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequireRoles(Roles.ADMIN)
+  @ApiResponse({ status: 200, type: [ProductResponseDto] })
+  async getPendingApprovalProducts() {
+    try {
+      return await this.productService.getPendingApprovalProducts();
+    } catch (error) {
+      this.loggerService.error(error);
+      throw error;
+    }
+  }
+
+  @Get('approved')
+  @Public()
+  @ApiResponse({ status: 200, type: [ProductResponseDto] })
+  async getApprovedProducts() {
+    try {
+      return await this.productService.getApprovedProducts();
+    } catch (error) {
+      this.loggerService.error(error);
+      throw error;
+    }
+  }
+
+  @Get('vendor/:vendorId')
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequireRoles(Roles.VENDOR, Roles.ADMIN)
+  @ApiResponse({ status: 200, type: [ProductResponseDto] })
+  @ApiQuery({ name: 'includePending', required: false, description: 'Include pending approval products' })
+  async getVendorProducts(
+    @Param('vendorId', ParseIntPipe) vendorId: number,
+    @Query('includePending') includePending?: string,
+  ) {
+    try {
+      const includePendingBool = includePending === 'true';
+      return await this.productService.getVendorProducts(vendorId, includePendingBool);
+    } catch (error) {
+      this.loggerService.error(error);
+      throw error;
+    }
+  }
+
+  @Get('vendor/:vendorId/approved')
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequireRoles(Roles.VENDOR, Roles.ADMIN)
+  @ApiOperation({ summary: 'Get approved products for a vendor' })
+  @ApiResponse({ status: 200, type: [ProductResponseDto] })
+  async getVendorApprovedProducts(@Param('vendorId', ParseIntPipe) vendorId: number) {
+    try {
+      return await this.productService.getVendorApprovedProducts(vendorId);
+    } catch (error) {
+      this.loggerService.error(error);
+      throw error;
+    }
+  }
+
+  @Get('vendor/:vendorId/pending')
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequireRoles(Roles.VENDOR, Roles.ADMIN)
+  @ApiOperation({ summary: 'Get pending (not approved) products for a vendor' })
+  @ApiResponse({ status: 200, type: [ProductResponseDto] })
+  async getVendorPendingProducts(@Param('vendorId', ParseIntPipe) vendorId: number) {
+    try {
+      return await this.productService.getVendorPendingProducts(vendorId);
     } catch (error) {
       this.loggerService.error(error);
       throw error;
@@ -209,11 +277,100 @@ export class ProductController {
 
   @Get(':id')
   @ApiResponse({ status: 200, type: ProductResponseDto })
-  async findOne(@Param('id', ParseIntPipe) id: number) {
+  async findOne(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
     try {
-      return await this.productService.findOne(id);
+      const userId = req.headers['user-id'] ? parseInt(req.headers['user-id']) : undefined;
+      const userRole = req.headers['user-role'];
+      
+      return await this.productService.findOne(id, userId, userRole);
     } catch (error) {
       this.loggerService.error(error);
+      throw error;
+    }
+  }
+
+  @Get(':id/with-attributes')
+  @Public()
+  @ApiResponse({ status: 200, type: ProductResponseDto })
+  @ApiOperation({ summary: 'Get product with all attributes' })
+  async findOneWithAttributes(@Param('id', ParseIntPipe) id: number) {
+    try {
+      const result = await this.productService.getProductWithAttributes(id);
+      return result;
+    } catch (error) {
+      this.loggerService.error(error);
+      throw error;
+    }
+  }
+
+  @Post(':id/attributes')
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequireRoles(Roles.VENDOR)
+  @ApiResponse({ status: 200, description: 'Attributes added successfully' })
+  @ApiOperation({ summary: 'Add attributes to an existing product' })
+  async addAttributes(
+    @Param('id', ParseIntPipe) productId: number,
+    @Body() attributes: ProductAttributeDto[],
+    @Req() req: any,
+  ) {
+    try {
+      const userId = parseInt(req.headers['user-id']);
+      await this.productService.addProductAttributes(productId, attributes, userId);
+      return { message: 'Attributes added successfully' };
+    } catch (error) {
+      this.loggerService.error(error);
+      throw error;
+    }
+  }
+
+  @Get('by-attribute/:attributeId/:valueId')
+  @Public()
+  @ApiResponse({ status: 200, type: [ProductResponseDto] })
+  @ApiOperation({ summary: 'Get products filtered by specific attribute value' })
+  async getProductsByAttribute(
+    @Param('attributeId', ParseIntPipe) attributeId: number,
+    @Param('valueId', ParseIntPipe) valueId: number,
+  ) {
+    try {
+      const result = await this.productService.getProductsByAttribute(attributeId, valueId);
+      return result;
+    } catch (error) {
+      this.loggerService.error(error);
+      throw error;
+    }
+  }
+
+  @Post(':id/variants')
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequireRoles(Roles.VENDOR)
+  @ApiResponse({ status: 200, description: 'Variants created successfully' })
+  @ApiOperation({ summary: 'Create variants for an existing product' })
+  async createVariants(
+    @Param('id', ParseIntPipe) productId: number,
+    @Body() variants: CreateProductVariantDto[],
+    @Req() req: any,
+  ) {
+    try {
+      const userId = parseInt(req.headers['user-id']);
+      await this.productService.createProductVariants(productId, variants, userId);
+      return { message: 'Variants created successfully' };
+    } catch (error) {
+      this.loggerService.error(error);
+      throw error;
+    }
+  }
+
+  @Get(':id/variants')
+  @Public()
+  @ApiResponse({ status: 200, description: 'Product variants retrieved successfully' })
+  @ApiOperation({ summary: 'Get all variants for a product' })
+  async getProductVariants(@Param('id', ParseIntPipe) productId: number) {
+    try {
+      const result = await this.productService.getProductVariants(productId);
+      return result;
+    } catch (error) {
+      this.loggerService.error(error);
+      throw error;
       throw error;
     }
   }

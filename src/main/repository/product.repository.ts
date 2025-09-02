@@ -41,6 +41,7 @@ export class ProductRepository {
   async getAll(): Promise<Product[]> {
     try {
       return await this.repository.find({
+        where: { isApproved: true }, // Only show approved products to users
         relations: ['category', 'brand', 'createdBy', 'updatedBy'],
         order: { createdAt: 'DESC' },
       });
@@ -57,7 +58,8 @@ export class ProductRepository {
         .leftJoinAndSelect('product.category', 'category')
         .leftJoinAndSelect('product.brand', 'brand')
         .leftJoinAndSelect('product.createdBy', 'createdBy')
-        .leftJoinAndSelect('product.updatedBy', 'updatedBy');
+        .leftJoinAndSelect('product.updatedBy', 'updatedBy')
+        .where('product.isApproved = :isApproved', { isApproved: true }); // Only show approved products
 
       // Apply filters
       if (filters.brandId) {
@@ -110,7 +112,8 @@ export class ProductRepository {
         .leftJoinAndSelect('product.brand', 'brand')
         .leftJoinAndSelect('product.createdBy', 'createdBy')
         .leftJoinAndSelect('product.updatedBy', 'updatedBy')
-        .where('brand.id = :brandId', { brandId });
+        .where('brand.id = :brandId', { brandId })
+        .andWhere('product.isApproved = :isApproved', { isApproved: true }); // Only show approved products
 
       // Apply additional filters
       if (filters?.minPrice !== undefined) {
@@ -162,7 +165,8 @@ export class ProductRepository {
         .leftJoinAndSelect('product.createdBy', 'createdBy')
         .leftJoinAndSelect('product.updatedBy', 'updatedBy')
         .where('category.id = :categoryId', { categoryId })
-        .andWhere('brand.id IN (:...brandIds)', { brandIds });
+        .andWhere('brand.id IN (:...brandIds)', { brandIds })
+        .andWhere('product.isApproved = :isApproved', { isApproved: true }); // Only show approved products
 
       // Apply additional filters
       if (filters?.minPrice !== undefined) {
@@ -197,7 +201,8 @@ export class ProductRepository {
         .leftJoin('product.category', 'category')
         .leftJoin('product.brand', 'brand')
         .where('category.id = :categoryId', { categoryId })
-        .andWhere('brand.id IN (:...brandIds)', { brandIds });
+        .andWhere('brand.id IN (:...brandIds)', { brandIds })
+        .andWhere('product.isApproved = :isApproved', { isApproved: true }); // Only show approved products
 
       // Apply same filters to count query
       if (filters?.minPrice !== undefined) {
@@ -239,6 +244,52 @@ export class ProductRepository {
       await this.repository.delete(id);
     } catch (error) {
       this.logger.error( error);
+      throw error;
+    }
+  }
+
+  // Approval workflow methods
+  async getPendingApprovalProducts(): Promise<Product[]> {
+    try {
+      return await this.repository.find({
+        where: { isApproved: false },
+        relations: ['category', 'brand', 'vendor', 'createdBy', 'updatedBy'],
+        order: { createdAt: 'ASC' },
+      });
+    } catch (error) {
+      this.logger.error('Error getting pending approval products', error);
+      throw error;
+    }
+  }
+
+  async getApprovedProducts(): Promise<Product[]> {
+    try {
+      return await this.repository.find({
+        where: { isApproved: true },
+        relations: ['category', 'brand', 'vendor', 'createdBy', 'updatedBy', 'approvedBy'],
+        order: { createdAt: 'DESC' },
+      });
+    } catch (error) {
+      this.logger.error('Error getting approved products', error);
+      throw error;
+    }
+  }
+
+  async getVendorProducts(vendorId: number, includePending: boolean = false): Promise<Product[]> {
+    try {
+      const whereCondition: any = { vendor: { id: vendorId } };
+      
+      if (!includePending) {
+        whereCondition.isApproved = true;
+      }
+
+      return await this.repository.find({
+        where: whereCondition,
+        relations: ['category', 'brand', 'vendor', 'createdBy', 'updatedBy', 'approvedBy'],
+        order: { createdAt: 'DESC' },
+      });
+    } catch (error) {
+      this.logger.error('Error getting vendor products', error);
       throw error;
     }
   }

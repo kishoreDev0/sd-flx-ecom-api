@@ -1,4 +1,4 @@
-import { IsArray, IsNumber, IsOptional, IsBoolean } from 'class-validator';
+import { IsArray, IsNumber, IsOptional, IsBoolean, IsIn } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -48,18 +48,22 @@ export class ProductByBrandsDto {
   inStock?: boolean;
 
   @ApiPropertyOptional({
-    description: 'Sort by field (name, price, created_at)',
+    description: 'Sort by field',
     example: 'price',
+    enum: ['name', 'price', 'createdAt', 'updatedAt'],
   })
   @IsOptional()
-  sortBy?: 'name' | 'price' | 'created_at';
+  @IsIn(['name', 'price', 'createdAt', 'updatedAt'])
+  sortBy?: 'name' | 'price' | 'createdAt' | 'updatedAt';
 
   @ApiPropertyOptional({
-    description: 'Sort order (ASC, DESC)',
-    example: 'ASC',
+    description: 'Sort order',
+    example: 'desc',
+    enum: ['asc', 'desc'],
   })
   @IsOptional()
-  sortOrder?: 'ASC' | 'DESC';
+  @IsIn(['asc', 'desc'])
+  sortOrder?: 'asc' | 'desc';
 
   @ApiPropertyOptional({
     description: 'Page number for pagination',

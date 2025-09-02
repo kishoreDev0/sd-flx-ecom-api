@@ -93,7 +93,7 @@ export class AuthenticationService {
       expiresAt: session.expiresAt,
     };
 
-    const userDetails = this.extractUserDetails(user);
+    const userDetails = await this.extractUserDetails(user);
     this.logger.log(`Login successful for email: ${email}`);
     return AUTH_RESPONSES.LOGIN_SUCCESS(userDetails, sessionResposne);
   }
@@ -147,7 +147,7 @@ export class AuthenticationService {
       expiresAt: session.expiresAt,
     };
 
-    const userDetails = this.extractUserDetails(user);
+    const userDetails = await this.extractUserDetails(user);
     this.logger.log(`Vendor login successful for email: ${email}`);
     return AUTH_RESPONSES.LOGIN_SUCCESS(userDetails, sessionResposne);
   }
@@ -201,7 +201,7 @@ export class AuthenticationService {
       expiresAt: session.expiresAt,
     };
 
-    const userDetails = this.extractUserDetails(user);
+    const userDetails = await this.extractUserDetails(user);
     this.logger.log(`Admin login successful for email: ${email}`);
     return AUTH_RESPONSES.LOGIN_SUCCESS(userDetails, sessionResposne);
   }
@@ -246,7 +246,7 @@ export class AuthenticationService {
       expiresAt: session.expiresAt,
     };
 
-    const userDetails = this.extractUserDetails(user);
+    const userDetails = await this.extractUserDetails(user);
     this.logger.log(`Google login successful for email: ${email}`);
     return AUTH_RESPONSES.LOGIN_SUCCESS(userDetails, sessionResponse);
   }
@@ -420,7 +420,7 @@ export class AuthenticationService {
       role,
     } as any);
     const saved = await this.userRepository.save(user);
-    return AUTH_RESPONSES.LOGIN_SUCCESS(this.extractUserDetails(saved), { token: '', expiresAt: new Date() } as any);
+    return AUTH_RESPONSES.LOGIN_SUCCESS(await this.extractUserDetails(saved), { token: '', expiresAt: new Date() } as any);
   }
 
   async registerVendor(dto: RegisterVendorDto): Promise<LoginResponseDto | FailureResponseDto> {
@@ -448,7 +448,7 @@ export class AuthenticationService {
       isVerified: false,
       isActive: true,
     });
-    return AUTH_RESPONSES.LOGIN_SUCCESS(this.extractUserDetails(savedUser), { token: '', expiresAt: new Date() } as any);
+    return AUTH_RESPONSES.LOGIN_SUCCESS(await this.extractUserDetails(savedUser), { token: '', expiresAt: new Date() } as any);
   }
 
   async validateUser(userId: number, accessToken: string): Promise<boolean> {
@@ -503,7 +503,7 @@ export class AuthenticationService {
             expiresAt: sessionDetails.expiresAt,
           };
           return AUTH_RESPONSES.LOGIN_SUCCESS(
-            this.extractUserDetails(
+            await this.extractUserDetails(
               await this.userRepository.findUserById(loginDetails.userID),
             ),
             sessionResposne,
@@ -587,8 +587,8 @@ export class AuthenticationService {
     await this.mailService.sendMail(offcialEmail, subject, template, context);
   }
 
-  private extractUserDetails(user: User): Partial<User> {
-    return {
+  private async extractUserDetails(user: User): Promise<Partial<User> & { vendor?: any }> {
+    const userDetails: Partial<User> & { vendor?: any } = {
       id: user.id,
       role: {
         id: user.role.id,
@@ -607,5 +607,37 @@ export class AuthenticationService {
       updatedAt: user.updatedAt,
       updatedBy: user.updatedBy,
     };
+
+    // If user is a vendor, include vendor details
+    if (user.role.roleName === 'Vendor') {
+      try {
+        const vendor = await this.vendorRepository.findVendorByUserId(user.id);
+        if (vendor) {
+          userDetails.vendor = {
+            id: vendor.id,
+            vendorName: vendor.vendorName,
+            businessName: vendor.businessName,
+            businessAddress: vendor.businessAddress,
+            phoneNumber: vendor.phoneNumber,
+            taxId: vendor.taxId,
+            businessLicense: vendor.businessLicense,
+            commissionRate: vendor.commissionRate,
+            payoutMethod: vendor.payoutMethod,
+            payoutAccount: vendor.payoutAccount,
+            kycStatus: vendor.kycStatus,
+            isVerified: vendor.isVerified,
+            isActive: vendor.isActive,
+            verificationDate: vendor.verificationDate,
+            createdAt: vendor.createdAt,
+            updatedAt: vendor.updatedAt,
+          };
+        }
+      } catch (error) {
+        // If vendor details can't be fetched, continue without them
+        this.logger.warn(`Could not fetch vendor details for user ${user.id}: ${error.message}`);
+      }
+    }
+
+    return userDetails;
   }
 }

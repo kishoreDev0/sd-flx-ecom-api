@@ -53,6 +53,14 @@ export class BrandRepository {
     });
   }
 
+  async findBrandsByVendorId(vendorId: number): Promise<Brand[]> {
+    return this.repo.find({
+      where: { vendor: { id: vendorId } },
+      relations: ['createdBy', 'updatedBy', 'vendor', 'products', 'brandCategories', 'brandCategories.category'],
+      order: { brandName: 'ASC' },
+    });
+  }
+
   async createBrand(brandData: Partial<Brand>): Promise<Brand> {
     const brand = this.repo.create(brandData);
     return this.repo.save(brand);

@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
 import { BrandCategory } from './brand-category.entity';
+import { Subcategory } from './subcategory.entity';
 
 @Entity('def_category')
 export class Category {
@@ -36,12 +37,9 @@ export class Category {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ManyToOne(() => Category, { nullable: true })
-  @JoinColumn({ name: 'parent_id' })
-  parent?: Category;
-
-  @OneToMany(() => Category, (c) => c.parent)
-  children?: Category[];
+  // Relationship with subcategories
+  @OneToMany(() => Subcategory, (subcategory) => subcategory.category)
+  subcategories?: Subcategory[];
 
   // Relationship with brands through mapping table
   @OneToMany(() => BrandCategory, (brandCategory) => brandCategory.category)

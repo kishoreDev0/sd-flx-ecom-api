@@ -1,36 +1,28 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Product } from '../entities/product.entity';
-import { ProductService } from '../service/product.service';
-import { ProductRepository } from '../repository/product.repository';
-import { ProductController } from '../controller/product.controller';
-import { CategoryModule } from './category.module'; // assuming this exists
-import { UserModule } from './user.module'; // assuming this exists
-import { LoggerModule } from './logger.module'; // assuming this exists
+import { ProductFeature } from '../entities/product-feature.entity';
+import { ProductAttribute } from '../entities/product-attribute.entity';
+import { ProductVariant } from '../entities/product-variant.entity';
+import { Feature } from '../entities/feature.entity';
+import { Category } from '../entities/category.entity';
+import { Brand } from '../entities/brand.entity';
+import { Vendor } from '../entities/vendor.entity';
 import { User } from '../entities/user.entity';
-import { UserSessionModule } from './user-session.module';
+import { BrandCategory } from '../entities/brand-category.entity';
+import { ProductController } from '../controller/product.controller';
+import { ProductService } from '../service/product.service';
+import { LoggerModule } from './logger.module';
 import { AuthenticationModule } from './authentication.module';
-import { BrandModule } from './brand.module';
-import { VendorModule } from './vendor.module';
-import { BrandCategoryModule } from './brand-category.module';
-import { S3Service } from '../service/s3.service';
-import { RolesGuard } from '../commons/guards/roles.guard';
-import { CommonUtilService } from '../utils/common.util';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Product, User]),
+    TypeOrmModule.forFeature([Product, ProductFeature, ProductAttribute, ProductVariant, Feature, Category, Brand, Vendor, User, BrandCategory]),
     LoggerModule,
-    forwardRef(() => CategoryModule),
-    forwardRef(() => UserModule),
-    forwardRef(() => UserSessionModule),
-    forwardRef(() => AuthenticationModule),
-    forwardRef(() => BrandModule),
-    forwardRef(() => VendorModule),
-    forwardRef(() => BrandCategoryModule),
+    AuthenticationModule,
   ],
-  providers: [ProductService, ProductRepository, S3Service, RolesGuard, CommonUtilService],
   controllers: [ProductController],
-  exports: [ProductService,ProductRepository],
+  providers: [ProductService],
+  exports: [ProductService],
 })
 export class ProductModule {}

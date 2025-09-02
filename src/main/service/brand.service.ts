@@ -1,9 +1,13 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { BrandRepository } from '../repository/brand.repository';
 import { VendorRepository } from '../repository/vendor.repository';
 import { CreateBrandDto } from '../dto/requests/brand/create-brand.dto';
 import { UpdateBrandDto } from '../dto/requests/brand/update-brand.dto';
 import { Brand } from '../entities/brand.entity';
+import { Category } from '../entities/category.entity';
+import { BrandCategory } from '../entities/brand-category.entity';
 import { User } from '../entities/user.entity';
 import { Vendor } from '../entities/vendor.entity';
 
@@ -12,7 +16,30 @@ export class BrandService {
   constructor(
     private readonly brandRepository: BrandRepository,
     private readonly vendorRepository: VendorRepository,
+    @InjectRepository(Category)
+    private readonly categoryRepository: Repository<Category>,
+    @InjectRepository(BrandCategory)
+    private readonly brandCategoryRepository: Repository<BrandCategory>,
   ) {}
+
+  private async enrichBrandWithDetails(brand: Brand): Promise<Brand> {
+    // Get vendor details
+    if (brand.vendor) {
+      brand.vendor = await this.vendorRepository.findVendorById(brand.vendor.id);
+    }
+
+    // Get primary category details
+    const primaryCategoryMapping = await this.brandCategoryRepository.findOne({
+      where: { brandId: brand.id, isPrimary: true },
+      relations: ['category'],
+    });
+
+    if (primaryCategoryMapping?.category) {
+      (brand as any).primaryCategory = primaryCategoryMapping.category;
+    }
+
+    return brand;
+  }
 
   async create(createBrandDto: CreateBrandDto, user: User): Promise<Brand> {
     // Check if brand name already exists
@@ -21,6 +48,12 @@ export class BrandService {
     );
     if (existingBrand) {
       throw new ConflictException('Brand name already exists');
+    }
+
+    // Check if category exists
+    const category = await this.categoryRepository.findOneBy({ id: createBrandDto.categoryId });
+    if (!category) {
+      throw new NotFoundException('Category not found');
     }
 
     const brandData: any = {
@@ -37,39 +70,82 @@ export class BrandService {
       brandData.vendor = vendor;
     }
 
-    return this.brandRepository.createBrand(brandData);
+    // Create the brand
+    const brand = await this.brandRepository.createBrand(brandData);
+
+    // Automatically create brand-category mapping
+    const mappingData = {
+      brandId: brand.id,
+      categoryId: createBrandDto.categoryId,
+      isPrimary: true,
+      sortOrder: 0,
+      isActive: true,
+      createdBy: user,
+      updatedBy: user,
+    };
+
+    const brandCategory = this.brandCategoryRepository.create(mappingData);
+    await this.brandCategoryRepository.save(brandCategory);
+
+    // Enrich brand with additional details
+    return this.enrichBrandWithDetails(brand);
   }
 
   async findAll(): Promise<Brand[]> {
-    return this.brandRepository.findAllBrands();
+    const brands = await this.brandRepository.findAllBrands();
+    // Enrich each brand with details
+    const enrichedBrands = await Promise.all(
+      brands.map(brand => this.enrichBrandWithDetails(brand))
+    );
+    return enrichedBrands;
   }
 
   async findActive(): Promise<Brand[]> {
-    return this.brandRepository.findActiveBrands();
+    const brands = await this.brandRepository.findActiveBrands();
+    // Enrich each brand with details
+    const enrichedBrands = await Promise.all(
+      brands.map(brand => this.enrichBrandWithDetails(brand))
+    );
+    return enrichedBrands;
   }
 
   async findOne(id: number): Promise<Brand> {
     const brand = await this.brandRepository.findBrandById(id);
-    if (!brand) {
-      throw new NotFoundException('Brand not found');
-    }
-    return brand;
+    if (!brand) throw new NotFoundException('Brand not found');
+    return this.enrichBrandWithDetails(brand);
   }
 
   async findByName(brandName: string): Promise<Brand> {
     const brand = await this.brandRepository.findBrandByName(brandName);
-    if (!brand) {
-      throw new NotFoundException('Brand not found');
-    }
-    return brand;
+    if (!brand) throw new NotFoundException('Brand not found');
+    return this.enrichBrandWithDetails(brand);
   }
 
   async findWithProducts(): Promise<Brand[]> {
-    return this.brandRepository.findBrandsWithProducts();
+    const brands = await this.brandRepository.findBrandsWithProducts();
+    // Enrich each brand with details
+    const enrichedBrands = await Promise.all(
+      brands.map(brand => this.enrichBrandWithDetails(brand))
+    );
+    return enrichedBrands;
   }
 
   async findByUserId(userId: number): Promise<Brand[]> {
-    return this.brandRepository.findBrandsByUserId(userId);
+    const brands = await this.brandRepository.findBrandsByUserId(userId);
+    // Enrich each brand with details
+    const enrichedBrands = await Promise.all(
+      brands.map(brand => this.enrichBrandWithDetails(brand))
+    );
+    return enrichedBrands;
+  }
+
+  async findByVendorId(vendorId: number): Promise<Brand[]> {
+    const brands = await this.brandRepository.findBrandsByVendorId(vendorId);
+    // Enrich each brand with details
+    const enrichedBrands = await Promise.all(
+      brands.map(brand => this.enrichBrandWithDetails(brand))
+    );
+    return enrichedBrands;
   }
 
   async update(id: number, updateBrandDto: UpdateBrandDto, user: User): Promise<Brand> {
@@ -89,12 +165,16 @@ export class BrandService {
       }
     }
 
-    const updateData = {
-      ...updateBrandDto,
+    // Remove fields that shouldn't be updated
+    const { createdBy, categoryId, ...updateData } = updateBrandDto;
+    
+    const finalUpdateData = {
+      ...updateData,
       updatedBy: user,
     };
 
-    return this.brandRepository.updateBrand(id, updateData);
+    const updatedBrand = await this.brandRepository.updateBrand(id, finalUpdateData);
+    return this.enrichBrandWithDetails(updatedBrand);
   }
 
   async remove(id: number): Promise<void> {
@@ -102,12 +182,6 @@ export class BrandService {
     if (!brand) {
       throw new NotFoundException('Brand not found');
     }
-
-    // Check if brand has associated products
-    if (brand.products && brand.products.length > 0) {
-      throw new ConflictException('Cannot delete brand with associated products');
-    }
-
     await this.brandRepository.deleteBrand(id);
   }
 

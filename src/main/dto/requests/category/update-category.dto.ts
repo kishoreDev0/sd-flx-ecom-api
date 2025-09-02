@@ -30,11 +30,6 @@ export class UpdateCategoryDTO {
   seoKeywords?: string[];
 
   @ApiPropertyOptional()
-  @IsNumber()
-  @IsOptional()
-  parentId?: number;
-
-  @ApiPropertyOptional()
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;

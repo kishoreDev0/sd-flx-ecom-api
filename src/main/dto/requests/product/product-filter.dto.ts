@@ -4,6 +4,14 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class ProductFilterDto {
   @ApiPropertyOptional({
+    description: 'Filter by product name',
+    example: 'iPhone',
+  })
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @ApiPropertyOptional({
     description: 'Filter by brand ID',
     example: 1,
   })
@@ -11,6 +19,15 @@ export class ProductFilterDto {
   @IsNumber()
   @Type(() => Number)
   brandId?: number;
+
+  @ApiPropertyOptional({
+    description: 'Filter by vendor ID',
+    example: 1,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  vendorId?: number;
 
   @ApiPropertyOptional({
     description: 'Minimum price filter',
@@ -47,6 +64,26 @@ export class ProductFilterDto {
   @IsBoolean()
   @Type(() => Boolean)
   inStock?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Page number for pagination',
+    example: 1,
+    default: 1,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  page?: number;
+
+  @ApiPropertyOptional({
+    description: 'Number of items per page',
+    example: 10,
+    default: 10,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  limit?: number;
 
   @ApiPropertyOptional({
     description: 'Sort by field',

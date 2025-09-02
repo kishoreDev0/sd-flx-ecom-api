@@ -13,6 +13,9 @@ import { Category } from './category.entity';
 import { Brand } from './brand.entity';
 import { Vendor } from './vendor.entity';
 import { ProductRating } from './product-rating.entity';
+import { ProductFeature } from './product-feature.entity';
+import { ProductVariant } from './product-variant.entity';
+import { ProductAttribute } from './product-attribute.entity';
 
 @Entity('def_product')
 export class Product {
@@ -47,8 +50,20 @@ export class Product {
   @OneToMany(() => ProductRating, (rating) => rating.product)
   ratings: ProductRating[];
 
+  // Relationship with features through mapping table
+  @OneToMany(() => ProductFeature, (productFeature) => productFeature.product)
+  productFeatures: ProductFeature[];
+
   @Column('simple-array', { nullable: true })
   features: number[];
+
+  // Relationship with variants
+  @OneToMany(() => ProductVariant, (variant) => variant.product)
+  variants: ProductVariant[];
+
+  // Relationship with attributes
+  @OneToMany(() => ProductAttribute, (productAttr) => productAttr.product)
+  productAttributes: ProductAttribute[];
 
   @Column()
   price: number;
