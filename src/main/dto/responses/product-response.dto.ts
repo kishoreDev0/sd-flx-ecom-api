@@ -1,5 +1,127 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+export class ProductVariantAttributeResponseDto {
+  @ApiProperty({
+    description: 'Attribute mapping ID',
+    example: 1,
+  })
+  id: number;
+
+  @ApiProperty({
+    description: 'Attribute information',
+    example: {
+      id: 1,
+      name: 'Color',
+      type: 'select'
+    }
+  })
+  attribute: {
+    id: number;
+    name: string;
+    type: string;
+  };
+
+  @ApiProperty({
+    description: 'Attribute value information',
+    example: {
+      id: 2,
+      value: 'Red',
+      displayName: 'Crimson Red'
+    }
+  })
+  attributeValue: {
+    id: number;
+    value: string;
+    displayName: string;
+  };
+}
+
+export class ProductVariantResponseDto {
+  @ApiProperty({
+    description: 'Variant ID',
+    example: 1,
+  })
+  id: number;
+
+  @ApiProperty({
+    description: 'Unique SKU for the variant',
+    example: 'TSHIRT-RED-L',
+  })
+  sku: string;
+
+  @ApiPropertyOptional({
+    description: 'Variant name',
+    example: 'Red Large T-Shirt',
+  })
+  name?: string;
+
+  @ApiPropertyOptional({
+    description: 'Variant-specific price (overrides product price)',
+    example: 29.99,
+  })
+  price?: number;
+
+  @ApiProperty({
+    description: 'Available stock for this variant',
+    example: 50,
+  })
+  stock: number;
+
+  @ApiPropertyOptional({
+    description: 'Variant barcode',
+    example: '1234567890123',
+  })
+  barcode?: string;
+
+  @ApiPropertyOptional({
+    description: 'Variant weight in grams',
+    example: 500,
+  })
+  weight?: number;
+
+  @ApiPropertyOptional({
+    description: 'Variant dimensions (LxWxH in cm)',
+    example: '30x20x15',
+  })
+  dimensions?: string;
+
+  @ApiPropertyOptional({
+    description: 'Variant-specific images (JSON string)',
+    example: '["https://example.com/variant1.jpg"]',
+  })
+  variantImages?: string;
+
+  @ApiProperty({
+    description: 'Whether this variant is active',
+    example: true,
+  })
+  isActive: boolean;
+
+  @ApiProperty({
+    description: 'Sort order for display',
+    example: 1,
+  })
+  sortOrder: number;
+
+  @ApiProperty({
+    description: 'Variant attributes',
+    type: [ProductVariantAttributeResponseDto],
+  })
+  attributes: ProductVariantAttributeResponseDto[];
+
+  @ApiProperty({
+    description: 'Variant creation date',
+    example: '2024-01-01T00:00:00.000Z',
+  })
+  createdAt: Date;
+
+  @ApiProperty({
+    description: 'Variant last update date',
+    example: '2024-01-01T00:00:00.000Z',
+  })
+  updatedAt: Date;
+}
+
 export class ProductResponseDto {
   @ApiProperty({
     description: 'Product ID',
@@ -178,6 +300,12 @@ export class ProductResponseDto {
     example: '2024-01-01T00:00:00.000Z',
   })
   updatedAt: Date;
+
+  @ApiPropertyOptional({
+    description: 'Product variants with different attribute combinations',
+    type: [ProductVariantResponseDto],
+  })
+  variants?: ProductVariantResponseDto[];
 }
 
 export type ProductResponseWrapper = {
@@ -193,3 +321,197 @@ export type ProductsResponseWrapper = {
   data: ProductResponseDto[];
   statusCode?: number;
 };
+
+// Frontend-friendly variant response DTOs
+export class FrontendVariantAttributeValueDto {
+  @ApiProperty({
+    description: 'Attribute value ID',
+    example: 1,
+  })
+  id: number;
+
+  @ApiProperty({
+    description: 'Attribute value name',
+    example: 'red',
+  })
+  name: string;
+
+  @ApiProperty({
+    description: 'Display name for the attribute value',
+    example: 'Crimson Red',
+  })
+  displayName: string;
+}
+
+export class FrontendVariantAttributeDto {
+  @ApiProperty({
+    description: 'Attribute value ID',
+    example: 1,
+  })
+  id: number;
+
+  @ApiProperty({
+    description: 'Attribute value name',
+    example: 'red',
+  })
+  name: string;
+
+  @ApiProperty({
+    description: 'Display name for the attribute value',
+    example: 'Crimson Red',
+  })
+  displayName: string;
+}
+
+export class FrontendVariantDto {
+  @ApiProperty({
+    description: 'Variant ID',
+    example: 1,
+  })
+  id: number;
+
+  @ApiProperty({
+    description: 'Unique SKU for the variant',
+    example: 'TSHIRT-RED-L',
+  })
+  sku: string;
+
+  @ApiPropertyOptional({
+    description: 'Variant name',
+    example: 'Red Large T-Shirt',
+  })
+  name?: string;
+
+  @ApiPropertyOptional({
+    description: 'Variant-specific price',
+    example: 29.99,
+  })
+  price?: number;
+
+  @ApiProperty({
+    description: 'Available stock for this variant',
+    example: 50,
+  })
+  stock: number;
+
+  @ApiPropertyOptional({
+    description: 'Variant barcode',
+    example: '1234567890123',
+  })
+  barcode?: string;
+
+  @ApiPropertyOptional({
+    description: 'Variant weight in grams',
+    example: 500,
+  })
+  weight?: number;
+
+  @ApiPropertyOptional({
+    description: 'Variant dimensions (LxWxH in cm)',
+    example: '30x20x15',
+  })
+  dimensions?: string;
+
+  @ApiPropertyOptional({
+    description: 'Variant-specific images (JSON string)',
+    example: '["https://example.com/variant1.jpg"]',
+  })
+  variantImages?: string;
+
+  @ApiProperty({
+    description: 'Whether this variant is active',
+    example: true,
+  })
+  isActive: boolean;
+
+  @ApiProperty({
+    description: 'Sort order for display',
+    example: 1,
+  })
+  sortOrder: number;
+
+  @ApiProperty({
+    description: 'Variant attributes as key-value pairs for easy frontend access',
+    example: {
+      color: { id: 1, name: 'red', displayName: 'Crimson Red' },
+      size: { id: 2, name: 'L', displayName: 'Large' }
+    },
+    type: 'object',
+    additionalProperties: {
+      type: 'object',
+      properties: {
+        id: { type: 'number', example: 1 },
+        name: { type: 'string', example: 'red' },
+        displayName: { type: 'string', example: 'Crimson Red' }
+      }
+    }
+  })
+  attributes: Record<string, FrontendVariantAttributeDto>;
+
+  @ApiProperty({
+    description: 'Variant creation date',
+    example: '2024-01-01T00:00:00.000Z',
+  })
+  createdAt: Date;
+
+  @ApiProperty({
+    description: 'Variant last update date',
+    example: '2024-01-01T00:00:00.000Z',
+  })
+  updatedAt: Date;
+}
+
+export class FrontendVariantsResponseDto {
+  @ApiProperty({
+    description: 'Grouped attributes for easy frontend iteration',
+    example: {
+      size: [
+        { id: 1, name: 'XL', displayName: 'Extra Large' },
+        { id: 2, name: 'L', displayName: 'Large' }
+      ],
+      color: [
+        { id: 1, name: 'red', displayName: 'Crimson Red' },
+        { id: 2, name: 'blue', displayName: 'Ocean Blue' }
+      ]
+    },
+    type: 'object',
+    additionalProperties: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'number', example: 1 },
+          name: { type: 'string', example: 'red' },
+          displayName: { type: 'string', example: 'Crimson Red' }
+        }
+      }
+    }
+  })
+  attributeGroups: Record<string, FrontendVariantAttributeValueDto[]>;
+
+  @ApiProperty({
+    description: 'Product variants with simplified attribute structure',
+    type: [FrontendVariantDto],
+  })
+  variants: FrontendVariantDto[];
+}
+
+export class FrontendVariantsResponseWrapper {
+  @ApiProperty({
+    description: 'Indicates if the request was successful',
+    example: true,
+  })
+  success: boolean;
+
+  @ApiProperty({
+    description: 'Response message',
+    example: 'Product variants retrieved successfully for frontend',
+  })
+  message: string;
+
+  @ApiProperty({
+    description: 'Response data containing grouped attributes and variants',
+    type: FrontendVariantsResponseDto,
+  })
+  data: FrontendVariantsResponseDto;
+}

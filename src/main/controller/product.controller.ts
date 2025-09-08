@@ -18,9 +18,8 @@ import { CreateProductDto } from '../dto/requests/product/create-product.dto';
 import { UpdateProductDto } from '../dto/requests/product/update-product.dto';
 import { ProductByBrandsDto } from '../dto/requests/product/product-by-brands.dto';
 import { ApproveProductDto, RejectProductDto } from '../dto/requests/product/approve-product.dto';
-import { ProductAttributeDto } from '../dto/requests/product/product-attribute.dto';
 import { CreateProductVariantDto } from '../dto/requests/product/create-product-variant.dto';
-import { ProductResponseDto } from '../dto/responses/product-response.dto';
+import { ProductResponseDto, FrontendVariantsResponseWrapper } from '../dto/responses/product-response.dto';
 import { ProductsWithPaginationResponseWrapper } from '../dto/responses/product-with-pagination-response.dto';
 import { PRODUCT_RESPONSES } from '../commons/constants/response-constants/product.constant';
 import { LoggerService } from '../service/logger.service';
@@ -44,7 +43,7 @@ export class ProductController {
 
   @Post()
   @UseGuards(AuthGuard, RolesGuard)
-  @RequireRoles(Roles.VENDOR)
+  @RequireRoles(Roles.VENDOR, Roles.ADMIN)
   @ApiResponse({ status: 201, type: ProductResponseDto })
   async create(@Body() dto: CreateProductDto, @Req() req: any) {
     try {
@@ -289,56 +288,11 @@ export class ProductController {
     }
   }
 
-  @Get(':id/with-attributes')
-  @Public()
-  @ApiResponse({ status: 200, type: ProductResponseDto })
-  @ApiOperation({ summary: 'Get product with all attributes' })
-  async findOneWithAttributes(@Param('id', ParseIntPipe) id: number) {
-    try {
-      const result = await this.productService.getProductWithAttributes(id);
-      return result;
-    } catch (error) {
-      this.loggerService.error(error);
-      throw error;
-    }
-  }
+  
 
-  @Post(':id/attributes')
-  @UseGuards(AuthGuard, RolesGuard)
-  @RequireRoles(Roles.VENDOR)
-  @ApiResponse({ status: 200, description: 'Attributes added successfully' })
-  @ApiOperation({ summary: 'Add attributes to an existing product' })
-  async addAttributes(
-    @Param('id', ParseIntPipe) productId: number,
-    @Body() attributes: ProductAttributeDto[],
-    @Req() req: any,
-  ) {
-    try {
-      const userId = parseInt(req.headers['user-id']);
-      await this.productService.addProductAttributes(productId, attributes, userId);
-      return { message: 'Attributes added successfully' };
-    } catch (error) {
-      this.loggerService.error(error);
-      throw error;
-    }
-  }
+  
 
-  @Get('by-attribute/:attributeId/:valueId')
-  @Public()
-  @ApiResponse({ status: 200, type: [ProductResponseDto] })
-  @ApiOperation({ summary: 'Get products filtered by specific attribute value' })
-  async getProductsByAttribute(
-    @Param('attributeId', ParseIntPipe) attributeId: number,
-    @Param('valueId', ParseIntPipe) valueId: number,
-  ) {
-    try {
-      const result = await this.productService.getProductsByAttribute(attributeId, valueId);
-      return result;
-    } catch (error) {
-      this.loggerService.error(error);
-      throw error;
-    }
-  }
+  
 
   @Post(':id/variants')
   @UseGuards(AuthGuard, RolesGuard)
@@ -371,6 +325,41 @@ export class ProductController {
     } catch (error) {
       this.loggerService.error(error);
       throw error;
+    }
+  }
+
+  @Get(':id/variants/frontend')
+  @Public()
+  @ApiResponse({ status: 200, type: FrontendVariantsResponseWrapper, description: 'Product variants retrieved successfully for frontend' })
+  @ApiOperation({ summary: 'Get product variants in frontend-friendly format with grouped attributes' })
+  async getProductVariantsForFrontend(@Param('id', ParseIntPipe) productId: number) {
+    try {
+      return await this.productService.getProductVariantsForFrontend(productId);
+    } catch (error) {
+      this.loggerService.error(error);
+      throw error;
+    }
+  }
+
+  @Get(':id/variant-availability')
+  @Public()
+  @ApiOperation({ summary: 'Get available attribute values for a product based on current selections' })
+  @ApiQuery({ name: 'selected', required: false, description: 'JSON array: [{attributeId, attributeValueId}]' })
+  async getVariantAvailability(
+    @Param('id', ParseIntPipe) productId: number,
+    @Query('selected') selected?: string,
+  ) {
+    try {
+      let selectedArr: Array<{ attributeId: number; attributeValueId: number }> | undefined;
+      if (selected) {
+        try {
+          const parsed = JSON.parse(selected);
+          if (Array.isArray(parsed)) selectedArr = parsed;
+        } catch {}
+      }
+      return await this.productService.getVariantAvailability(productId, selectedArr);
+    } catch (error) {
+      this.loggerService.error(error);
       throw error;
     }
   }

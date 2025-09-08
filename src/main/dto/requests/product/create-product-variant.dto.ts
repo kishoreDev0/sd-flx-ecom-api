@@ -1,4 +1,4 @@
-import { IsArray, IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString, ValidateNested, IsPositive, MinLength, MaxLength } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ProductAttributeDto } from './product-attribute.dto';
@@ -10,6 +10,8 @@ export class CreateProductVariantDto {
   })
   @IsString()
   @IsNotEmpty()
+  @MinLength(3, { message: 'SKU must be at least 3 characters long' })
+  @MaxLength(100, { message: 'SKU must not exceed 100 characters' })
   sku: string;
 
   @ApiPropertyOptional({
@@ -27,6 +29,7 @@ export class CreateProductVariantDto {
   @IsOptional()
   @IsNumber()
   @Type(() => Number)
+  @IsPositive({ message: 'Price must be a positive number' })
   price?: number;
 
   @ApiProperty({
@@ -35,6 +38,7 @@ export class CreateProductVariantDto {
   })
   @IsNumber()
   @Type(() => Number)
+  @IsPositive({ message: 'Stock must be a positive number' })
   stock: number;
 
   @ApiPropertyOptional({
@@ -52,6 +56,7 @@ export class CreateProductVariantDto {
   @IsOptional()
   @IsNumber()
   @Type(() => Number)
+  @IsPositive({ message: 'Weight must be a positive number' })
   weight?: number;
 
   @ApiPropertyOptional({
@@ -63,7 +68,7 @@ export class CreateProductVariantDto {
   dimensions?: string;
 
   @ApiPropertyOptional({
-    description: 'Variant-specific images (JSON array of URLs)',
+    description: 'Variant-specific images (array of image URLs)',
     example: ['https://example.com/variant1.jpg', 'https://example.com/variant2.jpg'],
     type: [String],
   })

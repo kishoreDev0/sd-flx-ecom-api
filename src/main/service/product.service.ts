@@ -14,11 +14,10 @@ import { CreateProductDto } from '../dto/requests/product/create-product.dto';
 import { UpdateProductDto } from '../dto/requests/product/update-product.dto';
 import { ProductFilterDto } from '../dto/requests/product/product-filter.dto';
 import { ProductByBrandsDto } from '../dto/requests/product/product-by-brands.dto';
-import { ProductResponseWrapper, ProductsResponseWrapper } from '../dto/responses/product-response.dto';
+import { ProductResponseWrapper, ProductsResponseWrapper, FrontendVariantsResponseWrapper } from '../dto/responses/product-response.dto';
 import { ProductsWithPaginationResponseWrapper } from '../dto/responses/product-with-pagination-response.dto';
 import { PRODUCT_RESPONSES } from '../commons/constants/response-constants/product.constant';
 import { LoggerService } from './logger.service';
-import { ProductAttributeDto } from '../dto/requests/product/product-attribute.dto';
 import { CreateProductVariantDto } from '../dto/requests/product/create-product-variant.dto';
 
 @Injectable()
@@ -48,12 +47,15 @@ export class ProductService {
   async create(dto: CreateProductDto): Promise<ProductResponseWrapper> {
     try {
       // Validate that the creator user exists and has the 'Vendor' role
-      const creator = await this.userRepo.findOne({ where: { id: dto.createdBy } });
+      const creator = await this.userRepo.findOne({ where: { id: dto.createdBy }, relations: ['role'] });
       if (!creator) {
         throw new NotFoundException('Creator user not found');
       }
-      if (creator.role?.roleName !== 'Vendor') {
-        throw new Error('Only vendors can create products');
+      const creatorRole = (creator.role?.roleName || '').toLowerCase();
+      const isVendor = creatorRole === 'vendor';
+      const isAdmin = creatorRole === 'admin';
+      if (!isVendor && !isAdmin) {
+        throw new Error('Only vendors or admins can create products');
       }
 
       // Validate category exists
@@ -73,26 +75,22 @@ export class ProductService {
 
       // Validate vendor exists and is verified
       let vendor = undefined;
-      if (dto.vendorId) {
-        vendor = await this.vendorRepo.findOne({ where: { id: dto.vendorId } });
-        if (!vendor) {
-          throw new NotFoundException('Vendor not found');
+      if (isVendor) {
+        if (dto.vendorId) {
+          vendor = await this.vendorRepo.findOne({ where: { id: dto.vendorId }, relations: ['user'] });
+          if (!vendor) throw new NotFoundException('Vendor not found');
+          if (!vendor.isVerified) throw new Error('Vendor must be verified to create products');
+          if (vendor.user.id !== creator.id) throw new Error('Vendor ID must match the creator user');
+        } else {
+          vendor = await this.vendorRepo.findOne({ where: { user: { id: creator.id } }, relations: ['user'] });
+          if (!vendor) throw new Error('Vendor not found for this user');
+          if (!vendor.isVerified) throw new Error('Vendor must be verified to create products');
         }
-        if (!vendor.isVerified) {
-          throw new Error('Vendor must be verified to create products');
-        }
-        if (vendor.user.id !== creator.id) {
-          throw new Error('Vendor ID must match the creator user');
-        }
-      } else {
-        // Try to find vendor by creator ID
-        vendor = await this.vendorRepo.findOne({ 
-          where: { user: { id: creator.id } },
-          relations: ['user']
-        });
-        if (!vendor) {
-          throw new Error('Vendor not found for this user');
-        }
+      } else if (isAdmin) {
+        if (!dto.vendorId) throw new Error('Admin must specify vendorId when creating products');
+        vendor = await this.vendorRepo.findOne({ where: { id: dto.vendorId }, relations: ['user'] });
+        if (!vendor) throw new NotFoundException('Vendor not found');
+        if (!vendor.isVerified) throw new Error('Vendor must be verified to create products');
       }
 
       // Create the product
@@ -123,10 +121,7 @@ export class ProductService {
         })));
       }
 
-      // Create attribute mappings if attributes are provided
-      if (dto.attributes && dto.attributes.length > 0) {
-        await this.addProductAttributes(savedProduct.id, dto.attributes, creator.id);
-      }
+      // Product-level attributes removed; attributes are handled per-variant
 
       // Create variants if provided
       if (dto.variants && dto.variants.length > 0) {
@@ -167,29 +162,7 @@ export class ProductService {
     }
   }
 
-  async addProductAttributes(
-    productId: number, 
-    attributes: ProductAttributeDto[], 
-    userId: number
-  ): Promise<void> {
-    try {
-      for (const attr of attributes) {
-        const productAttribute = this.productAttributeRepo.create({
-          productId,
-          attributeId: attr.attributeId,
-          attributeValueId: attr.attributeValueId,
-          customValue: attr.customValue,
-          createdBy: { id: userId },
-          updatedBy: { id: userId },
-        });
-
-        await this.productAttributeRepo.save(productAttribute);
-      }
-    } catch (error) {
-      this.logger.error('Error adding product attributes', error);
-      throw error;
-    }
-  }
+  
 
   async createProductVariants(
     productId: number, 
@@ -217,9 +190,39 @@ export class ProductService {
 
         const savedVariant = await this.productVariantRepo.save(productVariant);
 
-        // Create attribute mappings for this variant
+        // Link variant to specific product attributes
         if (variant.attributes && variant.attributes.length > 0) {
-          await this.addProductAttributes(productId, variant.attributes, userId);
+          // Find or create the product attributes for this variant
+          const productAttributes = [];
+          for (const attr of variant.attributes) {
+            // Check if this product attribute already exists
+            let productAttribute = await this.productAttributeRepo.findOne({
+              where: {
+                productId,
+                attributeId: attr.attributeId,
+                attributeValueId: attr.attributeValueId,
+              }
+            });
+
+            // If it doesn't exist, create it
+            if (!productAttribute) {
+              productAttribute = this.productAttributeRepo.create({
+                productId,
+                attributeId: attr.attributeId,
+                attributeValueId: attr.attributeValueId,
+                customValue: attr.customValue,
+                createdBy: { id: userId },
+                updatedBy: { id: userId },
+              });
+              productAttribute = await this.productAttributeRepo.save(productAttribute);
+            }
+
+            productAttributes.push(productAttribute);
+          }
+
+          // Link the variant to these product attributes
+          savedVariant.attributes = productAttributes;
+          await this.productVariantRepo.save(savedVariant);
         }
       }
     } catch (error) {
@@ -230,7 +233,10 @@ export class ProductService {
 
   async findOne(id: number, userId?: number, userRole?: string): Promise<ProductResponseWrapper> {
     try {
-      const product = await this.productRepo.findOne({ where: { id } });
+      const product = await this.productRepo.findOne({ 
+        where: { id },
+        relations: ['variants', 'variants.attributes', 'variants.attributes.attribute', 'variants.attributes.attributeValue']
+      });
       if (!product) throw new NotFoundException(PRODUCT_RESPONSES.PRODUCT_NOT_FOUND());
 
       // Check if user can see this product based on approval status and role
@@ -243,7 +249,93 @@ export class ProductService {
         throw new NotFoundException('Product not found');
       }
 
-      return PRODUCT_RESPONSES.PRODUCT_BY_ID_FETCHED(product, id);
+      // Get variants data (using same structure as getProductVariants)
+      const variants = product.variants?.map(variant => ({
+        id: variant.id,
+        sku: variant.sku,
+        name: variant.name,
+        price: variant.price,
+        stock: variant.stock,
+        barcode: variant.barcode,
+        weight: variant.weight,
+        dimensions: variant.dimensions,
+        variantImages: variant.variantImages,
+        isActive: variant.isActive,
+        sortOrder: variant.sortOrder,
+        attributes: variant.attributes?.map(attr => ({
+          id: attr.id,
+          attribute: {
+            id: attr.attribute.id,
+            name: attr.attribute.name,
+            type: attr.attribute.type,
+          },
+          attributeValue: {
+            id: attr.attributeValue.id,
+            value: attr.attributeValue.value,
+            displayName: attr.attributeValue.displayName,
+          },
+        })) || [],
+        createdAt: variant.createdAt,
+        updatedAt: variant.updatedAt,
+      })) || [];
+
+      // Create custom response with variants
+      const response = {
+        success: true,
+        message: `Product with ID ${id} fetched successfully`,
+        data: {
+          id: product.id,
+          name: product.name,
+          description: product.description,
+          imagesPath: product.imagesPath,
+          category: product.category ? {
+            id: product.category.id,
+            categoryName: product.category.categoryName,
+            description: product.category.description,
+          } : undefined,
+          brand: product.brand ? {
+            id: product.brand.id,
+            brandName: product.brand.brandName,
+            description: product.brand.brandDescription,
+          } : undefined,
+          vendor: product.vendor ? {
+            id: product.vendor.id,
+            vendorName: product.vendor.vendorName,
+            businessName: product.vendor.businessName,
+            isVerified: product.vendor.isVerified,
+          } : undefined,
+          features: [], // Features are not directly fetched here
+          price: product.price,
+          totalNoOfStock: product.totalNoOfStock,
+          noOfStock: product.noOfStock,
+          inStock: product.inStock,
+          isApproved: product.isApproved,
+          approvedBy: product.approvedBy ? {
+            id: product.approvedBy.id,
+            firstName: product.approvedBy.firstName,
+            lastName: product.approvedBy.lastName,
+            email: product.approvedBy.officialEmail,
+          } : undefined,
+          approvedAt: product.approvedAt,
+          createdBy: product.createdBy ? {
+            id: product.createdBy.id,
+            firstName: product.createdBy.firstName,
+            lastName: product.createdBy.lastName,
+            email: product.createdBy.officialEmail,
+          } : undefined,
+          updatedBy: product.updatedBy ? {
+            id: product.updatedBy.id,
+            firstName: product.updatedBy.firstName,
+            lastName: product.updatedBy.lastName,
+            email: product.updatedBy.officialEmail,
+          } : undefined,
+          createdAt: product.createdAt,
+          updatedAt: product.updatedAt,
+          variants: variants,
+        },
+      };
+
+      return response;
     } catch (error) {
       this.logger.error('Error finding product', error);
       throw error;
@@ -727,56 +819,7 @@ export class ProductService {
     }
   }
 
-  async getProductWithAttributes(productId: number): Promise<ProductResponseWrapper> {
-    try {
-      const product = await this.productRepo.findOne({
-        where: { id: productId },
-        relations: [
-          'productAttributes',
-          'productAttributes.attribute',
-          'productAttributes.attributeValue',
-          'category',
-          'brand',
-          'vendor',
-          'createdBy',
-          'updatedBy'
-        ],
-      });
-
-      if (!product) {
-        throw new NotFoundException(PRODUCT_RESPONSES.PRODUCT_NOT_FOUND());
-      }
-
-      return PRODUCT_RESPONSES.PRODUCT_BY_ID_FETCHED(product, productId);
-    } catch (error) {
-      this.logger.error('Error getting product with attributes', error);
-      throw error;
-    }
-  }
-
-  async getProductsByAttribute(attributeId: number, valueId: number): Promise<ProductsResponseWrapper> {
-    try {
-      const products = await this.productRepo
-        .createQueryBuilder('product')
-        .leftJoin('product.productAttributes', 'pa')
-        .where('pa.attributeId = :attributeId', { attributeId })
-        .andWhere('pa.attributeValueId = :valueId', { valueId })
-        .andWhere('product.isApproved = :isApproved', { isApproved: true })
-        .leftJoinAndSelect('product.category', 'category')
-        .leftJoinAndSelect('product.brand', 'brand')
-        .leftJoinAndSelect('product.vendor', 'vendor')
-        .getMany();
-
-      if (!products || products.length === 0) {
-        return PRODUCT_RESPONSES.PRODUCTS_NOT_FOUND();
-      }
-
-      return PRODUCT_RESPONSES.PRODUCTS_FETCHED(products);
-    } catch (error) {
-      this.logger.error('Error getting products by attribute', error);
-      throw error;
-    }
-  }
+  
 
   async getProductVariants(productId: number): Promise<any> {
     try {
@@ -798,7 +841,7 @@ export class ProductService {
           barcode: variant.barcode,
           weight: variant.weight,
           dimensions: variant.dimensions,
-          variantImages: variant.variantImages ? JSON.parse(variant.variantImages) : [],
+          variantImages: variant.variantImages,
           isActive: variant.isActive,
           sortOrder: variant.sortOrder,
           attributes: variant.attributes?.map(attr => ({
@@ -820,6 +863,143 @@ export class ProductService {
       };
     } catch (error) {
       this.logger.error('Error getting product variants', error);
+      throw error;
+    }
+  }
+
+  async getVariantAvailability(
+    productId: number,
+    selected?: Array<{ attributeId: number; attributeValueId: number }>,
+  ): Promise<any> {
+    try {
+      const variants = await this.productVariantRepo.find({
+        where: { productId, isActive: true },
+        relations: ['attributes', 'attributes.attribute', 'attributes.attributeValue'],
+        order: { sortOrder: 'ASC', sku: 'ASC' },
+      });
+
+      // Build index: attributeId -> valueId -> Set(variantIndex)
+      const index: Map<number, Map<number, Set<number>>> = new Map();
+      variants.forEach((v, i) => {
+        v.attributes?.forEach(attr => {
+          const attributeId = attr.attribute.id;
+          const valueId = attr.attributeValue.id;
+          if (!index.has(attributeId)) index.set(attributeId, new Map());
+          const valMap = index.get(attributeId)!;
+          if (!valMap.has(valueId)) valMap.set(valueId, new Set());
+          valMap.get(valueId)!.add(i);
+        });
+      });
+
+      // Start with all variants as candidates
+      let candidate = new Set(variants.map((_, i) => i));
+      if (selected && selected.length > 0) {
+        for (const s of selected) {
+          const setForChoice = index.get(s.attributeId)?.get(s.attributeValueId) ?? new Set<number>();
+          candidate = new Set([...candidate].filter(i => setForChoice.has(i)));
+        }
+      }
+
+      // Compute available valueIds per attribute from candidate variants
+      const availableByAttribute: Record<number, number[]> = {};
+      for (const [attrId, valMap] of index.entries()) {
+        const allowed = new Set<number>();
+        for (const [valId, setOfVariants] of valMap.entries()) {
+          for (const i of setOfVariants) {
+            if (candidate.has(i)) { allowed.add(valId); break; }
+          }
+        }
+        availableByAttribute[attrId] = Array.from(allowed);
+      }
+
+      return {
+        success: true,
+        message: 'Variant availability computed',
+        data: {
+          availableByAttribute,
+          candidateVariantIds: Array.from(candidate).map(i => variants[i].id),
+        },
+      };
+    } catch (error) {
+      this.logger.error('Error computing variant availability', error);
+      throw error;
+    }
+  }
+
+  async getProductVariantsForFrontend(productId: number): Promise<FrontendVariantsResponseWrapper> {
+    try {
+      const variants = await this.productVariantRepo.find({
+        where: { productId, isActive: true },
+        relations: ['attributes', 'attributes.attribute', 'attributes.attributeValue'],
+        order: { sortOrder: 'ASC', sku: 'ASC' },
+      });
+
+      // Group attributes by type for easy frontend iteration
+      const attributeGroups: { [key: string]: any[] } = {};
+      const processedValues: { [key: string]: Set<number> } = {};
+
+      // First pass: collect all unique attribute values
+      variants.forEach(variant => {
+        variant.attributes?.forEach(attr => {
+          const attrName = attr.attribute.name.toLowerCase(); // Use lowercase for consistency
+          const valueId = attr.attributeValue.id;
+          
+          if (!attributeGroups[attrName]) {
+            attributeGroups[attrName] = [];
+            processedValues[attrName] = new Set();
+          }
+          
+          // Add unique values only once
+          if (!processedValues[attrName].has(valueId)) {
+            processedValues[attrName].add(valueId);
+            attributeGroups[attrName].push({
+              id: valueId,
+              name: attr.attributeValue.value,
+              displayName: attr.attributeValue.displayName,
+            });
+          }
+        });
+      });
+
+      // Second pass: create simplified variants with attribute references
+      const simplifiedVariants = variants.map(variant => ({
+        id: variant.id,
+        sku: variant.sku,
+        name: variant.name,
+        price: variant.price,
+        stock: variant.stock,
+        barcode: variant.barcode,
+        weight: variant.weight,
+        dimensions: variant.dimensions,
+        variantImages: variant.variantImages,
+        isActive: variant.isActive,
+        sortOrder: variant.sortOrder,
+        // Simple attribute mapping for frontend
+        attributes: variant.attributes?.reduce((acc, attr) => {
+          const attrName = attr.attribute.name.toLowerCase();
+          acc[attrName] = {
+            id: attr.attributeValue.id,
+            name: attr.attributeValue.value,
+            displayName: attr.attributeValue.displayName,
+          };
+          return acc;
+        }, {} as any) || {},
+        createdAt: variant.createdAt,
+        updatedAt: variant.updatedAt,
+      }));
+
+      return {
+        success: true,
+        message: 'Product variants retrieved successfully for frontend',
+        data: {
+          // Grouped attributes for easy iteration
+          attributeGroups,
+          // Simplified variants with attribute references
+          variants: simplifiedVariants,
+        },
+      };
+    } catch (error) {
+      this.logger.error('Error getting product variants for frontend', error);
       throw error;
     }
   }

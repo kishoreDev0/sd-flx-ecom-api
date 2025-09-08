@@ -9,7 +9,6 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ProductAttributeDto } from './product-attribute.dto';
 import { CreateProductVariantDto } from './create-product-variant.dto';
 
 export class CreateProductDto {
@@ -45,8 +44,15 @@ export class CreateProductDto {
     example: [
       {
         sku: 'TSHIRT-BLACK-L',
+        name: 'Black Large T-Shirt',
         price: 29.99,
         stock: 50,
+        barcode: '1234567890123',
+        weight: 500,
+        dimensions: '30x20x15',
+        variantImages: ['https://example.com/tshirt-black-l-1.jpg', 'https://example.com/tshirt-black-l-2.jpg'],
+        isActive: true,
+        sortOrder: 1,
         attributes: [
           { attributeId: 1, attributeValueId: 2 }, // Color: Black
           { attributeId: 2, attributeValueId: 4 }  // Size: Large
@@ -54,11 +60,34 @@ export class CreateProductDto {
       },
       {
         sku: 'TSHIRT-BLACK-XL',
+        name: 'Black XL T-Shirt',
         price: 32.99,
         stock: 30,
+        barcode: '1234567890124',
+        weight: 550,
+        dimensions: '32x22x16',
+        variantImages: ['https://example.com/tshirt-black-xl-1.jpg'],
+        isActive: true,
+        sortOrder: 2,
         attributes: [
           { attributeId: 1, attributeValueId: 2 }, // Color: Black
           { attributeId: 2, attributeValueId: 5 }  // Size: XL
+        ]
+      },
+      {
+        sku: 'TSHIRT-RED-L',
+        name: 'Red Large T-Shirt',
+        price: 29.99,
+        stock: 25,
+        barcode: '1234567890125',
+        weight: 500,
+        dimensions: '30x20x15',
+        variantImages: ['https://example.com/tshirt-red-l-1.jpg'],
+        isActive: true,
+        sortOrder: 3,
+        attributes: [
+          { attributeId: 1, attributeValueId: 1 }, // Color: Red
+          { attributeId: 2, attributeValueId: 4 }  // Size: Large
         ]
       }
     ],
@@ -105,20 +134,7 @@ export class CreateProductDto {
   @IsNumber({}, { each: true })
   features?: number[];
 
-  @ApiPropertyOptional({
-    description: 'Product attributes (Color, Size, Material, etc.)',
-    type: [ProductAttributeDto],
-    example: [
-      { attributeId: 1, attributeValueId: 2 }, // Color: Red
-      { attributeId: 2, attributeValueId: 4 }, // Size: Large
-      { attributeId: 3, attributeValueId: 1 }  // Material: Cotton
-    ],
-  })
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => ProductAttributeDto)
-  attributes?: ProductAttributeDto[];
+  
 
 
 

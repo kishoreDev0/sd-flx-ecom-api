@@ -1,5 +1,127 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+export class ProductVariantAttributeDto {
+  @ApiProperty({
+    description: 'Attribute mapping ID',
+    example: 1,
+  })
+  id: number;
+
+  @ApiProperty({
+    description: 'Attribute information',
+    example: {
+      id: 1,
+      name: 'Color',
+      type: 'select'
+    }
+  })
+  attribute: {
+    id: number;
+    name: string;
+    type: string;
+  };
+
+  @ApiProperty({
+    description: 'Attribute value information',
+    example: {
+      id: 2,
+      value: 'Red',
+      displayName: 'Crimson Red'
+    }
+  })
+  attributeValue: {
+    id: number;
+    value: string;
+    displayName: string;
+  };
+}
+
+export class ProductVariantDto {
+  @ApiProperty({
+    description: 'Variant ID',
+    example: 1,
+  })
+  id: number;
+
+  @ApiProperty({
+    description: 'Unique SKU for the variant',
+    example: 'TSHIRT-RED-L',
+  })
+  sku: string;
+
+  @ApiPropertyOptional({
+    description: 'Variant name',
+    example: 'Red Large T-Shirt',
+  })
+  name?: string;
+
+  @ApiPropertyOptional({
+    description: 'Variant-specific price (overrides product price)',
+    example: 29.99,
+  })
+  price?: number;
+
+  @ApiProperty({
+    description: 'Available stock for this variant',
+    example: 50,
+  })
+  stock: number;
+
+  @ApiPropertyOptional({
+    description: 'Variant barcode',
+    example: '1234567890123',
+  })
+  barcode?: string;
+
+  @ApiPropertyOptional({
+    description: 'Variant weight in grams',
+    example: 500,
+  })
+  weight?: number;
+
+  @ApiPropertyOptional({
+    description: 'Variant dimensions (LxWxH in cm)',
+    example: '30x20x15',
+  })
+  dimensions?: string;
+
+  @ApiPropertyOptional({
+    description: 'Variant-specific images (JSON string)',
+    example: '["https://example.com/variant1.jpg"]',
+  })
+  variantImages?: string;
+
+  @ApiProperty({
+    description: 'Whether this variant is active',
+    example: true,
+  })
+  isActive: boolean;
+
+  @ApiProperty({
+    description: 'Sort order for display',
+    example: 1,
+  })
+  sortOrder: number;
+
+  @ApiProperty({
+    description: 'Variant attributes',
+    type: [ProductVariantAttributeDto],
+  })
+  attributes: ProductVariantAttributeDto[];
+
+  @ApiProperty({
+    description: 'Variant creation date',
+    example: '2024-01-01T00:00:00.000Z',
+  })
+  createdAt: Date;
+
+  @ApiProperty({
+    description: 'Variant last update date',
+    example: '2024-01-01T00:00:00.000Z',
+  })
+  updatedAt: Date;
+}
+
 export class ProductDto {
   @ApiProperty({
     description: 'Product ID',
@@ -178,6 +300,12 @@ export class ProductDto {
     example: '2024-01-01T00:00:00.000Z',
   })
   updatedAt: Date;
+
+  @ApiPropertyOptional({
+    description: 'Product variants with different attribute combinations',
+    type: [ProductVariantDto],
+  })
+  variants?: ProductVariantDto[];
 }
 
 export class PaginationInfo {
